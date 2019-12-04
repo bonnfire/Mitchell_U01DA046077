@@ -83,10 +83,32 @@ discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T
 
 # ideas: get the start of the session + number in c array
 # 
+# 
+
+testfile <- grep(value = T, pattern = '2019-02-07_10h48m_Subject 46260.txt', discounting_filenames) 
+test <- fread(paste0("grep -m1 -A2005 '\\-100' ", "'", testfile, "'")) 
+test$file <- testfile
+test_transpose <- transpose(test) %>% as.data.frame()
+
+indices <- which(test$V1 < 0)
+test_split <- split(test, cumsum(1:nrow(test) %in% indices))
+
+test_split_newcols <- lapply(test_split, function(x){
+  names(x) <- "codes"
+  x$time <- tail(x$codes, 1)
+  x <- x[-nrow(x),]
+  
+  # if(nrow(x) > 1){
+  #   x$reward <- x[2, 1]
+  #   x$adjustingamt <- x[3, 1]
+  # }
+
+  return(x)
+}) %>% rbindlist(fill = T) %>% dplyr::filter(codes != time)
 
 
 
-
+split(test, f = )
 
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
 
