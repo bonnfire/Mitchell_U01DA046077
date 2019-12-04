@@ -87,8 +87,8 @@ discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T
 
 testfile <- grep(value = T, pattern = '2019-02-07_10h48m_Subject 46260.txt', discounting_filenames) 
 test <- fread(paste0("grep -m1 -A2005 '\\-100' ", "'", testfile, "'")) 
-test$file <- testfile
-test_transpose <- transpose(test) %>% as.data.frame()
+# test$file <- testfile
+# test_transpose <- transpose(test) %>% as.data.frame()
 
 indices <- which(test$V1 < 0)
 test_split <- split(test, cumsum(1:nrow(test) %in% indices))
@@ -98,17 +98,50 @@ test_split_newcols <- lapply(test_split, function(x){
   x$time <- tail(x$codes, 1)
   x <- x[-nrow(x),]
   
-  # if(nrow(x) > 1){
-  #   x$reward <- x[2, 1]
-  #   x$adjustingamt <- x[3, 1]
-  # }
+  if(nrow(x) > 1){
+    x$reward <- x[2, 1]
+    x$adjustingamt <- x[3, 1]
+    x <- x[1,]
+  }
 
   return(x)
-}) %>% rbindlist(fill = T) %>% dplyr::filter(codes != time)
+}) %>% rbindlist(fill = T) 
+
+test_split_newcols$file <- testfile
+
+## write a function to do this for all of the files 
+readdiscounting <- function(x){
+  discounting <- fread(paste0("grep -m1 -A2005 '\\-100' ", "'", x, "'")) 
+  indices <- which(discounting$V1 < 0)
+  discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
+  
+  discounting_split_newcols <- lapply(discounting_split, function(x){
+    names(x) <- "codes"
+    x$time <- tail(x$codes, 1)
+    x <- x[-nrow(x),]
+    
+    if(nrow(x) > 1){
+      x$reward <- x[2, 1]
+      x$adjustingamt <- x[3, 1]
+      x <- x[1,]
+    }
+    
+    return(x)
+  }) %>% rbindlist(fill = T) 
+  discounting_split_newcols$file <- x
+  
+  return(discounting_split_newcols)
+}
+
+discounting_df <- lapply(discounting_filenames[1:10], readdiscounting) %>% rbindlist(fill = T)
+discounting_df %<>% 
+  mutate(str_match)
 
 
+## check if the within file date information matches with filename information
 
-split(test, f = )
+## extract other variables
+
 
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
 
