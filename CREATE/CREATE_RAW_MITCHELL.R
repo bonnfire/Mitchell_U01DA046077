@@ -34,21 +34,37 @@ discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T
 
   
 ## currently they are writing python script to extract the following
+## EXAMPLE USING THE ANNOTATED VERSION
 # Subject#  
+# sed -n '7p' assuming same location
 # 
 # Session  
+# group by animals and order by date and time and assign session numbers? 
+# OR 
+# use the latin shipment information to find where the file falls in the square??
 # 
 # Number of trials (total) 
+# sed -n '22p' (number of elements in C array) - 
+# OR 
+# 20 +23 +9+8=immediate SS choices+delay LL choices+immediate SS forced+delay LL forced
 # 
 # Number of free choice trials 
 # 
+# 
 # Number of forced choice trials (code for Choice, Forced Choice, or Free Choice) 
+# count the number of codes that exceed 100 or 200? 
 # 
 # Number of events before center nose poke 
+# ? which center nose poke (\-6), the number of sessions between each center nose poke or just the first one?
+# 
 # 
 # RT: Reaction Times (time from start to center nose poke) 
+# 3803 is on line 104; the time after the first -6 code apppearance # assuming just first center nose poke
 # 
 # Number of events before “choice” 
+# is this value 4454 - 3803 # assuming its the time after lever press 
+# OR is this value 4116 - 3803 # assuming its the time after nosepoke
+# OR Is this value 4116 - 3803 # assuming its any code after the center nose poke
 # 
 # CHRT: Choice Reaction Time (time from center to choice) 
 # 
@@ -57,8 +73,16 @@ discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T
 # Collection time (time from choice to delivered side head entry)  
 # 
 # Number of events in time out periods 
+# number of timestamps/codes between Begin TO (\-20) line 117 and Begin Session (\-100) line  (since there isn't a code for end TO)
+# 4 excluding the start and end? -27, -26, -25, -25
+# ?? what to do with more than one timeout?
 # 
 # Duration of time out periods  
+# 7579-4579 = times after those two codes (begin to and begin session) 
+# 
+
+# ideas: get the start of the session + number in c array
+# 
 
 
 
