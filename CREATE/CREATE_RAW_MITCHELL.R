@@ -92,7 +92,7 @@ readdiscounting <- function(x){
   
   discounting_split_newcols <- lapply(discounting_split, function(x){
     names(x) <- "codes"
-    x$time <- tail(x$codes, 1)
+    x$timefromstart <- tail(x$codes, 1)
     x <- x[-nrow(x),]
     
     if(nrow(x) > 1){
@@ -109,8 +109,11 @@ readdiscounting <- function(x){
 }
 
 discounting_df <- lapply(discounting_filenames[1:10], readdiscounting) %>% rbindlist(fill = T)
-discounting_df %<>% 
-  mutate(str_match)
+discounting_df_expanded <- discounting_df %>% 
+  mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2],
+         date = str_extract(file, "\\d{4}-\\d{2}-\\d{2}"),
+         time = gsub("h", ":", str_extract(file, "\\d{2}h\\d{2}")),
+         date = as.POSIXct(date))
 
 
 ## check if the within file date information matches with filename information
