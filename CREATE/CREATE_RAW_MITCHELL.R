@@ -19,6 +19,47 @@ discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
                                  24, 0 ,16, 2, 8, 4,
                                  16, 24, 8, 0, 4, 2,
                                  0, 2, 24, 4, 16, 8) 
+# include code to unzip the files and duplicate the files from the original directory to the new one
+#### XXXXXXXXXXXXx
+
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting") # use duplicate folder that contains the unzipped files
+discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T)
+
+# extract critical information 
+# readsubjectnum <- 
+  
+  ## sed -n '7p;22p;61p;67p;79p' '2019-02-07_09h41m_Subject 46067.txt' # works for highlighted portions 
+  
+  ## grep -A 3 -m1 '.3' '2019-02-07_09h41m_Subject 46067.txt'|tail -1
+
+  
+## currently they are writing python script to extract the following
+# Subject#  
+# 
+# Session  
+# 
+# Number of trials (total) 
+# 
+# Number of free choice trials 
+# 
+# Number of forced choice trials (code for Choice, Forced Choice, or Free Choice) 
+# 
+# Number of events before center nose poke 
+# 
+# RT: Reaction Times (time from start to center nose poke) 
+# 
+# Number of events before “choice” 
+# 
+# CHRT: Choice Reaction Time (time from center to choice) 
+# 
+# Number of events before collection (delivered side head entry) 
+# 
+# Collection time (time from choice to delivered side head entry)  
+# 
+# Number of events in time out periods 
+# 
+# Duration of time out periods  
+
 
 
 
