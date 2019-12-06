@@ -120,16 +120,35 @@ readdiscounting <- function(x){
 # return(discounting)
 }
 
-discounting_df <- lapply(discounting_filenames[1:2], readdiscounting) 
-%>% rbindlist(fill = T)
+discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
+# summary looks good, no positive numbers in codes and all positive times
 
 discounting_df_expanded <- discounting_df %>% 
+  rename('filename' = 'file') %>% 
   mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2],
          date = str_extract(file, "\\d{4}-\\d{2}-\\d{2}"),
          time = gsub("h", ":", str_extract(file, "\\d{2}h\\d{2}")),
          date = as.POSIXct(date))
 
+# extract squad (?) and box information
+readsquadbox <- function(x){
+  squadbox <- fread(paste0("sed -n '9p; 10p' ", "'", x, "'"))
+  # squadbox$box <- fread(paste0("sed -n '10p' ", "'", x, "'"))
+  # squadbox %<>% rename("squad" = "V1")
+  squadbox$filename <- x
+  return(squadbox)
+}
+discounting_squadbox <- lapply(discounting_filenames, readsquadbox) %>% rbindlist(fill = T)
+discounting_squadbox %<>%
+  mutate(ind = rep(c(1, 2),length.out = n())) %<>%
+  group_by(ind) %<>%
+  mutate(id = row_number()) %<>%
+  spread(ind, V1) %<>%
+  select(-id) %<>% 
+  rename("box" = "1",
+         "squad" = "2")
 
+discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename")
 ## check if the within file date information matches with filename information
 
 ## extract other variables
