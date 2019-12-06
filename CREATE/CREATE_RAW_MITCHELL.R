@@ -93,32 +93,31 @@ readCelems_df <- lapply(discounting_filenames[1:10],readCelems) %>% rbindlist() 
 
 readdiscounting <- function(x){
   
-  # for(i in 1:length(x)){
-  C_elems <- fread(paste0("sed -n '22p' ", "'", x, "'")) 
+  # C_elems <- fread(paste0("sed -n '22p' ", "'", x, "'")) 
   
-  discounting <- fread(paste0("grep -m1 -A", C_elems$V1 -32, " '\\-100' ", "'", x, "'"))
-# # }
-#   indices <- which(discounting$V1 < 0)
-#   discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
-# 
-#   discounting_split_newcols <- lapply(discounting_split, function(x){
-#     names(x) <- "codes"
-#     x$timefromstart <- tail(x$codes, 1)
-#     x <- x[-nrow(x),]
-# 
-#     if(nrow(x) > 1){
-#       x$reward <- x[2, 1]
-#       x$adjustingamt <- x[3, 1]
-#       x <- x[1,]
-#     }
-# 
-#     return(x)
-#   }) %>% rbindlist(fill = T)
-#   discounting_split_newcols$file <- x
-# 
-#  return(discounting_split_newcols)
+  discounting <- fread(paste0("sed -n /-100/,/30000/p ", "'", x, "'"))
+  discounting <- discounting[-nrow(discounting),]
+  indices <- which(discounting$V1 < 0)
+  discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
+
+  discounting_split_newcols <- lapply(discounting_split, function(x){
+    names(x) <- "codes"
+    x$timefromstart <- tail(x$codes, 1)
+    x <- x[-nrow(x),]
+
+    if(nrow(x) > 1){
+      x$reward <- x[2, 1]
+      x$adjustingamt <- x[3, 1]
+      x <- x[1,]
+    }
+
+    return(x)
+  }) %>% rbindlist(fill = T)
+  discounting_split_newcols$file <- x
+
+ return(discounting_split_newcols)
 # return(C_elems)
-return(discounting)
+# return(discounting)
 }
 
 discounting_df <- lapply(discounting_filenames[1:2], readdiscounting) 
