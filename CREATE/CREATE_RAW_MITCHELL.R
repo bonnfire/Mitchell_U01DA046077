@@ -161,7 +161,7 @@ discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-0
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes == "-200") %>% nrow()
 # forced immediate trials 
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes == "-300") %>% nrow()
-
+####################################
 # events prior to center nose poke (free choice)
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-1", "-3", "-5", "-7")) %>% nrow()
 # events prior to center nose poke (forced delay)
@@ -188,11 +188,66 @@ discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-0
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-225", "-227", "-226", "-221", "-223")) %>% nrow()
 # total events prior to timeout (all trials)
 sum(priorto_free, priorto_fdel, priorto_fimm)
+####################################
+# average reaction time (free choice)
+
+# average choice reaction time (free choice)
+
+# average timeout duration (free choice)
+
+# average collection time (free choice)
+
+
+
+# events prior immediate reward collection (free choice)
+
+# events prior delayed reward collection (free choice)
+
+# total events prior to reward collection
 
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% count(codes)
 
+# discounting_df <- discounting_df_expanded %>% 
+#   group_by(filename) %>%   
+#   mutate(free_choice = )
 
-
+  subset_disc %>% 
+    group_by(filename) %>% 
+    summarize(subject = head(subject, 1),
+              date = head(date, 1),
+              time = head(time, 1),
+              box = head(box, 1),
+              squad = head(squad, 1),
+      
+              tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
+              tot_num_free = length(timefromstart[codes %in% c("-100")]),
+              tot_num_fd = length(timefromstart[codes %in% c("-200")]),
+              tot_num_fi = length(timefromstart[codes %in% c("-300")]),
+              tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
+                
+              events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+              events_before_center_fd = length(timefromstart[codes %in% c("-101", "-103", "-105")]),
+              events_before_center_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
+              events_before_center_tot = sum(events_before_center, events_before_center_fd, events_before_center_fi),
+              
+              events_before_choice = length(timefromstart[codes %in% c("-15", "-17", "-16", "-7")]),
+              events_before_choice_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
+              events_before_choice_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
+              events_before_choice_tot = sum(events_before_choice, events_before_choice_fd, events_before_choice_fi),
+              
+              events_during_to = length(timefromstart[codes %in%  c("-25", "-27", "-26", "-21", "-23")]),
+              events_during_to_fd = length(timefromstart[codes %in% c("-125", "-127", "-126", "-121", "-123")]),
+              events_during_to_fi = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]),
+              events_during_to_tot = sum(events_during_to, events_during_to_fd, events_during_to_fi) 
+            
+              )
+  
+  memberorders %>% 
+    group_by(MemID) %>% 
+    summarise(sum2= sum(value[week<=2]), sum4= sum(value[week <=4]), 
+              count2=sum(week<=2), count4= sum(week<=4))
+  
+  
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
 
 # The first and last patch changes of the test session were excluded 
