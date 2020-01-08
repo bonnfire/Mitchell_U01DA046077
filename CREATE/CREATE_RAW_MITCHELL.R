@@ -11,14 +11,14 @@
 
 # Shipment2 Latin Square (From U01_Shipment2_LS_Data_Files_Overview.pdf)
 # Expectations: 110 subjects; provided 3960/3960 sessions for analysis
-  
+
 # Each subject performed 6 iterations of each time delay 0s,2s, 4s, 8s, 16s, and 24sin the delay discounting task(89X36 sessions)
 discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
-                                 2, 4, 0, 8, 24, 16,
-                                 8, 16, 4, 24, 2, 0,
-                                 24, 0 ,16, 2, 8, 4,
-                                 16, 24, 8, 0, 4, 2,
-                                 0, 2, 24, 4, 16, 8) 
+                                2, 4, 0, 8, 24, 16,
+                                8, 16, 4, 24, 2, 0,
+                                24, 0 ,16, 2, 8, 4,
+                                16, 24, 8, 0, 4, 2,
+                                0, 2, 24, 4, 16, 8) 
 # include code to unzip the files and duplicate the files from the original directory to the new one
 #### XXXXXXXXXXXXx
 
@@ -27,12 +27,12 @@ discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T
 
 # extract critical information 
 # readsubjectnum <- 
-  
-  ## sed -n '7p;22p;61p;67p;79p' '2019-02-07_09h41m_Subject 46067.txt' # works for highlighted portions 
-  
-  ## grep -A 3 -m1 '.3' '2019-02-07_09h41m_Subject 46067.txt'|tail -1
 
-  
+## sed -n '7p;22p;61p;67p;79p' '2019-02-07_09h41m_Subject 46067.txt' # works for highlighted portions 
+
+## grep -A 3 -m1 '.3' '2019-02-07_09h41m_Subject 46067.txt'|tail -1
+
+
 ## currently they are writing python script to extract the following
 ## EXAMPLE USING THE ANNOTATED VERSION
 # Subject#  
@@ -99,25 +99,25 @@ readdiscounting <- function(x){
   discounting <- discounting[-nrow(discounting),]
   indices <- which(discounting$V1 < 0)
   discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
-
+  
   discounting_split_newcols <- lapply(discounting_split, function(x){
     names(x) <- "codes"
     x$timefromstart <- tail(x$codes, 1)
     x <- x[-nrow(x),]
-
+    
     if(nrow(x) > 1){
       x$reward <- x[2, 1]
       x$adjustingamt <- x[3, 1]
       x <- x[1,]
     }
-
+    
     return(x)
   }) %>% rbindlist(fill = T)
   discounting_split_newcols$file <- x
-
- return(discounting_split_newcols)
-# return(C_elems)
-# return(discounting)
+  
+  return(discounting_split_newcols)
+  # return(C_elems)
+  # return(discounting)
 }
 
 discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
@@ -152,6 +152,45 @@ discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadb
 ## check if the within file date information matches with filename information
 
 ## extract other variables
+
+# total number of trials is free choice + forced delay + forced immediate
+# won't work, psuedocode discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% sum(#below)
+# free choice trials
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes == "-100") %>% nrow()
+# forced delay trials
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes == "-200") %>% nrow()
+# forced immediate trials 
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes == "-300") %>% nrow()
+
+# events prior to center nose poke (free choice)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-1", "-3", "-5", "-7")) %>% nrow()
+# events prior to center nose poke (forced delay)
+### NOT WORKING discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-101", "-103", "-105 )) %>% nrow()
+# events prior to center nose poke (forced immediate)
+### NOT WORKING discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-201", "-203", "-205", "-207")) %>% nrow()
+# total events prior to center nose poke
+sum(priorcenter_free, priorcenter_fdel, priorcenter_fimm)
+
+# events prior to choice (free choice)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-15", "-17", "-16", "-7")) %>% nrow()
+# events prior to choice (forced delayed)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-101", "-103", "-105", "-107")) %>% nrow()
+# events prior to choice (formed imm)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-201", "-203", "-205", "-207")) %>% nrow()
+# total events prior to choice (all trials)
+sum(priorchoice_free, priorchoice_fdel, priorchoice_fimm)
+
+# events during timeout (free choice)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-25", "-27", "-26", "-21", "-23")) %>% nrow()
+# events during timeout (forced delay)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-125", "-127", "-126", "-121", "-123")) %>% nrow()
+# events during timeout (forced immediate)
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-225", "-227", "-226", "-221", "-223")) %>% nrow()
+# total events prior to timeout (all trials)
+sum(priorto_free, priorto_fdel, priorto_fimm)
+
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% count(codes)
+
 
 
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
