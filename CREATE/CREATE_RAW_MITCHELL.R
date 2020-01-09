@@ -1,5 +1,8 @@
 ### Extract and process RAW TEXT and CSV files
 
+library(tidyr)
+library(lubridate)
+
 #########################################
 ########## DISCOUNTING ##################
 #########################################
@@ -89,8 +92,45 @@ readCelems<- function(x){
   C_elems$filename <- x
   return(C_elems)
 }
-readCelems_df <- lapply(discounting_filenames[1:10],readCelems) %>% rbindlist() %>% rename("C_elem" = "V1")
+readCelems_df <- lapply(discounting_filenames[1:10],readCelems) %>% rbindlist() 
+readCelems_df %>% 
+  dplyr::rename("Date_Time" = "V1") %>% 
+  group_by(filename) %>% 
+  dplyr::mutate(row_number = 1:n()) %>% head
 
+# checking if date time in file matches date time in filename
+readDateTimes <- function(x){
+  Date_Time <- fread(paste0("sed -n '1, 3p; 11, 12p' ", "'", x, "'"))
+  Date_Time$filename <- x
+  return(Date_Time)
+}
+
+readDateTimes_df <- lapply(discounting_filenames, readDateTimes) %>% rbindlist() %>% 
+  dplyr::rename("Date_Time" = "V1") %>% 
+  group_by(filename) %>% 
+  dplyr::mutate(row_number = row_number()) %>% 
+  spread(row_number, Date_Time) %>% 
+  unite("date", "1":"3", sep = "/") %>% 
+  unite("time", "4":"5", sep = ":") %>%  
+  unite("datetime", "date":"time", sep = " ") %>% 
+  mutate(datetime = lubridate::mdy_hm(datetime, tz = "UTC"),
+         datetime_file = stringr::str_match(filename, "square/(.*?)m_")[,2] %>% 
+           mgsub(., c("_", "h"), c(" ", ":")) %>% 
+           lubridate::ymd_hm(., tz = "UTC")) #removed the 11,13p in sed statemetn and time 4:6 to account for the missing second information from filename
+
+readDateTimes_df %>% 
+  dplyr::filter(datetime != datetime_file) %>% dim # 0 no cases; all match 
+
+# extract delay information to be joined by filename
+readdelay_discounting <- function(x){
+  delay <- fread(paste0("sed -n '61p' ", "'", x, "'"))
+  delay$filename <- x
+  return(delay)
+}
+readdelay_discounting_df <- lapply(discounting_filenames[1:10],readdelay_discounting) %>% rbindlist() %>% 
+  dplyr::rename("delay" = "V1") 
+
+# extract event and codes data
 readdiscounting <- function(x){
   
   # C_elems <- fread(paste0("sed -n '22p' ", "'", x, "'")) 
