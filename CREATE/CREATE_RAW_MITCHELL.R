@@ -127,8 +127,9 @@ readdelay_discounting <- function(x){
   delay$filename <- x
   return(delay)
 }
-readdelay_discounting_df <- lapply(discounting_filenames[1:10],readdelay_discounting) %>% rbindlist() %>% 
-  dplyr::rename("delay" = "V1") 
+readdelay_discounting_df <- lapply(discounting_filenames,readdelay_discounting) %>% rbindlist() %>% 
+  dplyr::rename("delay" = "V1") %>% 
+  mutate(delay = mgsub(delay, c(1, 2000, 4000, 8000, 16000, 24000), c(0, 2, 4, 8, 16, 24)))
 
 # extract event and codes data
 readdiscounting <- function(x){
@@ -164,10 +165,10 @@ discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(f
 # summary looks good, no positive numbers in codes and all positive times
 
 discounting_df_expanded <- discounting_df %>% 
-  rename('filename' = 'file') %>% 
-  mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2],
-         date = str_extract(file, "\\d{4}-\\d{2}-\\d{2}"),
-         time = gsub("h", ":", str_extract(file, "\\d{2}h\\d{2}")),
+  dplyr::rename('filename' = 'file') %>% 
+  mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+         date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+         time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
          date = as.POSIXct(date))
 
 # extract squad (?) and box information
@@ -188,7 +189,8 @@ discounting_squadbox %<>%
   rename("box" = "1",
          "squad" = "2")
 
-discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename")
+discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename") %>% 
+  left_join(., readdelay_discounting_df)
 ## check if the within file date information matches with filename information
 
 ## extract other variables
