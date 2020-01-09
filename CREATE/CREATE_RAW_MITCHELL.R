@@ -210,43 +210,101 @@ discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-0
 # discounting_df <- discounting_df_expanded %>% 
 #   group_by(filename) %>%   
 #   mutate(free_choice = )
+subset_disc <- discounting_df_expanded %>% subset(filename %in% c("./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt", 
+                                                                  "./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt",
+                                                                  "./Ship1_Latin-square/2019-02-07_10h48m_Subject 46260.txt"))
 
-  subset_disc %>% 
-    group_by(filename) %>% 
-    summarize(subject = head(subject, 1),
-              date = head(date, 1),
-              time = head(time, 1),
-              box = head(box, 1),
-              squad = head(squad, 1),
-      
-              tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
-              tot_num_free = length(timefromstart[codes %in% c("-100")]),
-              tot_num_fd = length(timefromstart[codes %in% c("-200")]),
-              tot_num_fi = length(timefromstart[codes %in% c("-300")]),
-              tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
-                
-              events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
-              events_before_center_fd = length(timefromstart[codes %in% c("-101", "-103", "-105")]),
-              events_before_center_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
-              events_before_center_tot = sum(events_before_center, events_before_center_fd, events_before_center_fi),
-              
-              events_before_choice = length(timefromstart[codes %in% c("-15", "-17", "-16", "-7")]),
-              events_before_choice_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
-              events_before_choice_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
-              events_before_choice_tot = sum(events_before_choice, events_before_choice_fd, events_before_choice_fi),
-              
-              events_during_to = length(timefromstart[codes %in%  c("-25", "-27", "-26", "-21", "-23")]),
-              events_during_to_fd = length(timefromstart[codes %in% c("-125", "-127", "-126", "-121", "-123")]),
-              events_during_to_fi = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]),
-              events_during_to_tot = sum(events_during_to, events_during_to_fd, events_during_to_fi) 
+
+eventchoices <- data.frame("key" = c(-100, -1, -3, -5, -6, -7), 
+                           "meaning" = c("begin_trial", "leverpress_imm", "leverpress_del", "nosepoke_imm", "nosepoke_center", "nosepoke_del"))
+eventchoices_full <- eventchoices %>% 
+  rbind(data.frame("key" = eventchoices$key[2:6] - 10, 
+                                  "meaning" = paste0(eventchoices$meaning[2:6], "_choice"))) %>% 
+  rbind(data.frame("key" = -20, "meaning" = "begin_to")) %>% 
+  rbind(data.frame("key" = eventchoices$key[2:6] - 20, 
+                   "meaning" = paste0(eventchoices$meaning[2:6], "_to"))) %>% 
+  rbind(data.frame("key" = c(-51, -53), "meaning" = c("reinforcer_imm", "reinforcer_del"))) %>% 
+  rbind(data.frame("key" = .$key[2:11] - 100, 
+                   "meaning" = paste0(.$meaning[2:11], "_fd"))) %>% 
+  rbind(data.frame("key" = .$key[2:11] - 200, 
+                   "meaning" = paste0(.$meaning[2:11], "_fi")))
+  
+  
+# subset_disc %>% 
+#     group_by(filename) %>% 
+#     summarize(subject = head(subject, 1),
+#               date = head(date, 1),
+#               time = head(time, 1),
+#               box = head(box, 1),
+#               squad = head(squad, 1),
+#       
+#               tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
+#               tot_num_free = length(timefromstart[codes %in% c("-100")]), #potentialy subtract one
+#               tot_num_fd = length(timefromstart[codes %in% c("-200")]),
+#               tot_num_fi = length(timefromstart[codes %in% c("-300")]),
+#               tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
+#                 
+#               events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+#               events_before_center_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
+#               events_before_center_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
+#               events_before_center_tot = sum(events_before_center, events_before_center_fd, events_before_center_fi),
+#               
+#               events_before_choice = length(timefromstart[codes %in% c("-15", "-17", "-16", "-7")]),
+#               events_before_choice_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
+#               events_before_choice_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
+#               events_before_choice_tot = sum(events_before_choice, events_before_choice_fd, events_before_choice_fi),
+#               
+#               events_during_to = length(timefromstart[codes %in%  c("-25", "-27", "-26", "-21", "-23")]),
+#               events_during_to_fd = length(timefromstart[codes %in% c("-125", "-127", "-126", "-121", "-123")]),
+#               events_during_to_fi = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]),
+#               events_during_to_tot = sum(events_during_to, events_during_to_fd, events_during_to_fi),
+#               
+#               events_before_collect_d = length(timefromstart[codes %in% c("-1", "-3", "-7", "-6", "-13", "-101", "-103", "-107", "-201", "-203", "-207", "-17","-16", "-117", "-116", "-217", "-216")] & | codes %in% c("-5") % ),
+#               events_before_collect_i = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]))
+
+discountingvalidtraits <- discounting_df_expanded %>% 
+  group_by(filename) %>% 
+  summarize(subject = head(subject, 1),
+            date = head(date, 1),
+            time = head(time, 1),
+            box = head(box, 1),
+            squad = head(squad, 1),
             
-              )
+            tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
+            tot_num_free = length(timefromstart[codes %in% c("-100")]), #potentialy subtract one
+            tot_num_fd = length(timefromstart[codes %in% c("-200")]),
+            tot_num_fi = length(timefromstart[codes %in% c("-300")]),
+            tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
+            
+            events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+            
+            avg_rxn_time = mean(timefromstart[codes %in% c("-6")])
+            )
+            
+subset_disc%>% 
+  group_by(filename) %>% 
   
-  memberorders %>% 
-    group_by(MemID) %>% 
-    summarise(sum2= sum(value[week<=2]), sum4= sum(value[week <=4]), 
-              count2=sum(week<=2), count4= sum(week<=4))
-  
+  summarize(subject = head(subject, 1),
+            date = head(date, 1),
+            time = head(time, 1),
+            box = head(box, 1),
+            squad = head(squad, 1),
+            
+            tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
+            tot_num_free = length(timefromstart[codes %in% c("-100")]), #potentialy subtract one
+            tot_num_fd = length(timefromstart[codes %in% c("-200")]),
+            tot_num_fi = length(timefromstart[codes %in% c("-300")]),
+            tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
+            
+            events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+            
+            avg_rxn_time = mean(timefromstart[codes %in% c("-6")]),
+            
+  )
+
+## finding choice_reaction_time
+choice_reaction_time <- ddply(subset_disc, .(filename), transform, choicereactiontime=timefromstart-timefromstart[codes == -100])
+subset_disc %>% dplyr::filter(codes == -6|!is.na(reward))
   
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
 
