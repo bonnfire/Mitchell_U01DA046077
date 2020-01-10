@@ -372,23 +372,35 @@ rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(
 subset_disc_onlyinterestedcodes <- subset_disc %>% subset(codes %in% c(-100, -13, -6, -11))
 test_rxntime_crt <- lapply(split(subset_disc_onlyinterestedcodes, cumsum(1:nrow(subset_disc_onlyinterestedcodes) %in% which(subset_disc_onlyinterestedcodes$codes == -100))), function(x){
   x <- x %>% 
-    mutate(rxn_time_del = ifelse(nrow(x)==2 & x$codes[3] == -13, NA, x$timefromstart[2] - x$timefromstart[1]),
-           choice_rxn_time_del = ifelse(nrow(x)==2, NA, x$timefromstart[3] - x$timefromstart[2]),
+    mutate(rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[2] - x$timefromstart[1], NA),
+           choice_rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[3] - x$timefromstart[2], NA),
            rxn_time_imm = ifelse(x$codes[3] == -11, x$timefromstart[2] - x$timefromstart[1], NA),
            choice_rxn_imm = ifelse(x$codes[3] == -11, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
     slice(1) %>% 
     dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   return(x) 
 }) %>% rbindlist() %>% 
-  group_by(filename) %>% 
-  dplyr::mutate(trial_id = paste0("trial_", dplyr::row_number()),
+  dplyr::group_by(filename) %>% 
+  # dplyr::mutate(trial_id = paste0("trial_", dplyr::row_number()),
+  dplyr::mutate(trial_id = dplyr::row_number(),
                 rxn_time_del = rxn_time_del/100,
-                choice_rxn_time_del = choice_rxn_time_del/100,
-                rxn_time_imm = rxn_time_imm/100,
-                choice_rxn_imm = choice_rxn_imm/100)
+                # choice_rxn_time_del = choice_rxn_time_del/100,
+                rxn_time_imm = rxn_time_imm/100) %>% 
+# , choice_rxn_imm = choice_rxn_imm/100) %>% 
+  ungroup() # create individual trial information
 
+# aggregate above individual trial information to get group values
+test_rxntime_crt_avg <- test_rxntime_crt %>% 
+  dplyr::group_by(filename) %>% 
+  slice(31:n()) %>% 
+  dplyr::mutate(avg_rxn_time_del = mean(rxn_time_del, na.rm = T),
+            avg_choice_rxn_time_del = mean(choice_rxn_time_del, na.rm = T),
+            avg_rxn_time_imm = mean(rxn_time_imm, na.rm = T), 
+            avg_choice_rxn_imm = mean(choice_rxn_imm, na.rm = T)) %>%
+  # mutate_at(vars(contains('avg')), as.numeric) %>% 
+  dplyr::select(-c(rxn_time_del, choice_rxn_time_del, rxn_time_imm, choice_rxn_imm)) %>% 
+  dplyr::filter(trial_id == max(trial_id)) ## won't be correct if you load plyr after dplyr
 
-rxn_time_aggregate <- rxn_time
 
 # helpful if sapply, but changed to lapply
 # %>% 
