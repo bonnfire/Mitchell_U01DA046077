@@ -358,7 +358,8 @@ subset_disc %>% dplyr::filter(codes == -6|!is.na(reward))
 reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6))
 rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(reactiontimes$codes == -100))), function(x){
   x <- x %>% 
-    mutate(rxn_time = ifelse(nrow(x)==2, NA, x$timefromstart[2] - x$timefromstart[1])) %>% 
+    mutate(rxn_time = ifelse(nrow(x)==2, NA, x$timefromstart[2] - x$timefromstart[1]),
+           choice_time = ifelse(nrow(x)==2, NA, x$timefromstart[3] - x$timefromstart[2])) %>% 
     slice(1) %>% 
     dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   return(x) 
@@ -366,6 +367,28 @@ rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(
   group_by(filename) %>% 
   dplyr::mutate(trial_id = paste0("trial_", dplyr::row_number()),
          rxn_time = rxn_time/100)
+
+
+subset_disc_onlyinterestedcodes <- subset_disc %>% subset(codes %in% c(-100, -13, -6, -11))
+test_rxntime_crt <- lapply(split(subset_disc_onlyinterestedcodes, cumsum(1:nrow(subset_disc_onlyinterestedcodes) %in% which(subset_disc_onlyinterestedcodes$codes == -100))), function(x){
+  x <- x %>% 
+    mutate(rxn_time_del = ifelse(nrow(x)==2 & x$codes[3] == -13, NA, x$timefromstart[2] - x$timefromstart[1]),
+           choice_rxn_time_del = ifelse(nrow(x)==2, NA, x$timefromstart[3] - x$timefromstart[2]),
+           rxn_time_imm = ifelse(x$codes[3] == -11, x$timefromstart[2] - x$timefromstart[1], NA),
+           choice_rxn_imm = ifelse(x$codes[3] == -11, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
+    slice(1) %>% 
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+}) %>% rbindlist() %>% 
+  group_by(filename) %>% 
+  dplyr::mutate(trial_id = paste0("trial_", dplyr::row_number()),
+                rxn_time_del = rxn_time_del/100,
+                choice_rxn_time_del = choice_rxn_time_del/100,
+                rxn_time_imm = rxn_time_imm/100,
+                choice_rxn_imm = choice_rxn_imm/100)
+
+
+rxn_time_aggregate <- rxn_time
 
 # helpful if sapply, but changed to lapply
 # %>% 
