@@ -338,16 +338,46 @@ subset_disc%>%
             tot_num_fi = length(timefromstart[codes %in% c("-300")]),
             tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
             
-            events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+            events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")])
             
-            avg_rxn_time = mean(timefromstart[codes %in% c("-6")]),
+            # avg_rxn_time = mean(timefromstart[codes %in% c("-6")]),
             
   )
+
+subset_disc%>% 
+  group_by(filename) %>% 
 
 ## finding choice_reaction_time
 choice_reaction_time <- ddply(subset_disc, .(filename), transform, choicereactiontime=timefromstart-timefromstart[codes == -100])
 subset_disc %>% dplyr::filter(codes == -6|!is.na(reward))
   
+## exploration  -- make sense of the data
+## discounting_df_expanded %>% subset(codes %in% c(-6, -13) & subject == "46067" & delay == 4 & date == "2019-02-07")%>% distinct(adjustingamt, .keep_all = T) %>% View(.)
+## discounting_df_expanded %>% subset(!is.na(adjustingamt) & subject == "46067" & delay == 4 & date == "2019-02-07")%>% distinct(adjustingamt, .keep_all = T) %>% View(.)
+
+reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6))
+rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(reactiontimes$codes == -100))), function(x){
+  x <- x %>% 
+    mutate(rxn_time = ifelse(nrow(x)==2, NA, x$timefromstart[2] - x$timefromstart[1])) %>% 
+    slice(1) %>% 
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+  }) %>% rbindlist() %>% 
+  group_by(filename) %>% 
+  dplyr::mutate(trial_id = paste0("trial_", dplyr::row_number()),
+         rxn_time = rxn_time/100)
+
+# helpful if sapply, but changed to lapply
+# %>% 
+#   dplyr::rename(rxn_time = ".") %>% 
+#   cbind(trial = paste0("trial_", 1:length(which(reactiontimes$codes == -100)))) %>% 
+#   mutate(rxn_time = rxn_time/100)
+# 
+# rxn_time <- rxn_time %>% rbindlist()
+#   
+#   do.call("rbind",.)
+
+
 ##  Test sessions last: 10 minutes or cumulative total 5 ml of water consumption
 
 # The first and last patch changes of the test session were excluded 
