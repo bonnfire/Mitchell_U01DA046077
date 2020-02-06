@@ -222,18 +222,18 @@ discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-0
 # events prior to center nose poke (free choice)
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-1", "-3", "-5", "-7")) %>% nrow()
 # events prior to center nose poke (forced delay)
-### NOT WORKING discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-101", "-103", "-105 )) %>% nrow()
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-101", "-103", "-105", "-107")) %>% nrow()
 # events prior to center nose poke (forced immediate)
-### NOT WORKING discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-201", "-203", "-205", "-207")) %>% nrow()
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-201", "-203", "-205", "-207")) %>% nrow()
 # total events prior to center nose poke
 sum(priorcenter_free, priorcenter_fdel, priorcenter_fimm)
 
 # events prior to choice (free choice)
-discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-15", "-17", "-16", "-7")) %>% nrow()
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-15", "-17", "-16")) %>% nrow()
 # events prior to choice (forced delayed)
-discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-101", "-103", "-105", "-107")) %>% nrow()
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-116", "-115", "-117")) %>% nrow()
 # events prior to choice (formed imm)
-discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-201", "-203", "-205", "-207")) %>% nrow()
+discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-215", "-217", "-216")) %>% nrow()
 # total events prior to choice (all trials)
 sum(priorchoice_free, priorchoice_fdel, priorchoice_fimm)
 
