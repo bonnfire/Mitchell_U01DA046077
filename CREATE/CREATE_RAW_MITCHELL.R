@@ -245,6 +245,12 @@ discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-0
 discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% subset(codes %in% c("-225", "-227", "-226", "-221", "-223")) %>% nrow()
 # total events prior to timeout (all trials)
 sum(priorto_free, priorto_fdel, priorto_fimm)
+
+
+## using the subset_disc object created below to test the summary function 
+
+
+### XX PICK UP HERE!  
 ####################################
 # average reaction time (free choice)
 
