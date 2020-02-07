@@ -475,20 +475,23 @@ collection_subset_time <- lapply(split(collection_subset, cumsum(1:nrow(collecti
   x <- x %>% 
     mutate(
       collection_time = case_when(
-        x$codes[1] == -11 ~ x$timefromstart[match(-25, x$codes)] - x$timefromstart[1], 
-        x$codes[1] == -13 ~ x$timefromstart[match(-27, x$codes)] - x$timefromstart[1], 
-      ))%>%
+        x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
+        x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
+        x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
+        x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
+        TRUE ~ "NA"),
+      collection_time = as.numeric(collection_time)) %>%
     slice(1) %>%
     dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   return(x) 
 }) %>% rbindlist() 
 
-timeout_subset_time %>% 
+collection_subset_time %>% 
   dplyr::group_by(filename) %>% 
   # slice(31:n()) %>% 
-  dplyr::mutate(avg_timeout_dur_free = mean(timeout_duration_free, na.rm = T)) %>%
+  dplyr::mutate(avg_collection_time_free = mean(collection_time, na.rm = T)) %>%
   # mutate_at(vars(contains('avg')), as.numeric) %>% 
-  dplyr::select(-c(timeout_duration)) %>% 
+  dplyr::select(-c(collection_time)) %>% 
   slice(1)
 dplyr::filter(trialid == head(trialid)) ## won't be correct if you load plyr after dplyr
 
