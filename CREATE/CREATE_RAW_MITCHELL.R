@@ -475,12 +475,13 @@ collection_subset_time <- lapply(split(collection_subset, cumsum(1:nrow(collecti
   x <- x %>% 
     mutate(
       collection_time = case_when(
-        x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
-        x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
+        x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+        x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
         x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
         x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
         TRUE ~ "NA"),
-      collection_time = as.numeric(collection_time)) %>%
+      collection_time = as.numeric(collection_time)
+      ) %>%
     slice(1) %>%
     dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   return(x) 
@@ -494,6 +495,61 @@ collection_subset_time %>%
   dplyr::select(-c(collection_time)) %>% 
   slice(1)
 dplyr::filter(trialid == head(trialid)) ## won't be correct if you load plyr after dplyr
+
+
+
+
+
+
+
+## getting events prior to immediate reward collection 
+
+if(-11)
+  count(-1, -3, -7, -6, 
+        -101, -103, -107,
+        -201, -203, -207, 
+        -17, -16, 
+        -117, -116, 
+        -217, -216,
+        -27, -26,
+        -21, -23,
+        -125, -127, -126, -121, -123, 
+        -225, -227, -226, -221, -223)
+events_subset <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(1|3)$", eventchoices_full$key, value = T)), -6)) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
+events_subset_time <- lapply(split(events_subset, cumsum(1:nrow(events_subset) %in% which(events_subset$codes %in% c(-11, -13)))), function(x){
+  x <- x %>% 
+    mutate(
+      events_before_collect_imm = ifelse(x$codes[1] == -11, length(timefromstart[codes %in% c(-1, -3, -7, -6, 
+                                                                                              -101, -103, -107,
+                                                                                              -201, -203, -207, 
+                                                                                              -17, -16, 
+                                                                                              -117, -116, 
+                                                                                              -217, -216,
+                                                                                              -27, -26,
+                                                                                              -21, -23,
+                                                                                              -125, -127, -126, -121, -123, 
+                                                                                              -225, -227, -226, -221, -223)]), NA) 
+      # events_before_collect_del = 
+      # collection_time = case_when(
+      #   x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
+      #   x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
+      #   x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
+      #   x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
+      #   TRUE ~ "NA"),
+      # collection_time = as.numeric(collection_time)
+      ) %>%
+    slice(1) %>%
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+}) %>% rbindlist() 
+
+events_subset_time$events_before_collect_imm %>% sum(na.rm = T)
+
+
+
+
+
+
 
 
 
