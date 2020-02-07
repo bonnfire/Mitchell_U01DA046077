@@ -248,9 +248,7 @@ sum(priorto_free, priorto_fdel, priorto_fimm)
 
 
 ## using the subset_disc object created below to test the summary function 
-
-
-### XX PICK UP HERE!  
+  
 ####################################
 # average reaction time (free choice)
 
@@ -293,37 +291,37 @@ eventchoices_full <- eventchoices %>%
                    "meaning" = paste0(.$meaning[2:11], "_fi")))
 
 
-# subset_disc %>% 
-#     group_by(filename) %>% 
-#     summarize(subject = head(subject, 1),
-#               date = head(date, 1),
-#               time = head(time, 1),
-#               box = head(box, 1),
-#               squad = head(squad, 1),
-#       
-#               tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
-#               tot_num_free = length(timefromstart[codes %in% c("-100")]), #potentialy subtract one
-#               tot_num_fd = length(timefromstart[codes %in% c("-200")]),
-#               tot_num_fi = length(timefromstart[codes %in% c("-300")]),
-#               tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
-#                 
-#               events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
-#               events_before_center_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
-#               events_before_center_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
-#               events_before_center_tot = sum(events_before_center, events_before_center_fd, events_before_center_fi),
-#               
-#               events_before_choice = length(timefromstart[codes %in% c("-15", "-17", "-16", "-7")]),
-#               events_before_choice_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
-#               events_before_choice_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
-#               events_before_choice_tot = sum(events_before_choice, events_before_choice_fd, events_before_choice_fi),
-#               
-#               events_during_to = length(timefromstart[codes %in%  c("-25", "-27", "-26", "-21", "-23")]),
-#               events_during_to_fd = length(timefromstart[codes %in% c("-125", "-127", "-126", "-121", "-123")]),
-#               events_during_to_fi = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]),
-#               events_during_to_tot = sum(events_during_to, events_during_to_fd, events_during_to_fi),
-#               
-#               events_before_collect_d = length(timefromstart[codes %in% c("-1", "-3", "-7", "-6", "-13", "-101", "-103", "-107", "-201", "-203", "-207", "-17","-16", "-117", "-116", "-217", "-216")] & | codes %in% c("-5") % ),
-#               events_before_collect_i = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]))
+subset_disc %>% group_by(filename, subject, date, time, box, squad) %>%
+  summarize(
+    tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
+    tot_num_free = length(timefromstart[codes %in% c("-100")]), #potentialy subtract one
+    tot_num_fd = length(timefromstart[codes %in% c("-200")]),
+    tot_num_fi = length(timefromstart[codes %in% c("-300")]),
+    tot_forced_trials = length(timefromstart[codes %in% c("-200", "-300")]),
+    
+    events_before_center = length(timefromstart[codes %in% c("-1", "-3", "-5", "-7")]),
+    events_before_center_fd = length(timefromstart[codes %in% c("-101", "-103", "-105", "-107")]),
+    events_before_center_fi = length(timefromstart[codes %in% c("-201", "-203", "-205", "-207")]),
+    events_before_center_tot = sum(events_before_center, events_before_center_fd, events_before_center_fi),
+    
+    events_before_choice = length(timefromstart[codes %in% c("-15", "-17", "-16")]),
+    events_before_choice_fd = length(timefromstart[codes %in% c("-116", "-115", "-117")]),
+    events_before_choice_fi = length(timefromstart[codes %in% c("-215", "-217", "-216")]),
+    events_before_choice_tot = sum(events_before_choice, events_before_choice_fd, events_before_choice_fi),
+    
+    events_during_to = length(timefromstart[codes %in%  c("-25", "-27", "-26", "-21", "-23")]),
+    events_during_to_fd = length(timefromstart[codes %in% c("-125", "-127", "-126", "-121", "-123")]),
+    events_during_to_fi = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]),
+    events_during_to_tot = sum(events_during_to, events_during_to_fd, events_during_to_fi),
+    
+    
+    avg_rxn_time = mean(timefromstart[codes %in% c("-6")])) %>% as.data.frame()
+
+
+
+
+# events_before_collect_d = length(timefromstart[codes %in% c("-1", "-3", "-7", "-6", "-13", "-101", "-103", "-107", "-201", "-203", "-207", "-17","-16", "-117", "-116", "-217", "-216")] & | codes %in% c("-5") % ),
+# events_before_collect_i = length(timefromstart[codes %in% c("-225", "-227", "-226", "-221", "-223")]))
 
 discountingvalidtraits <- discounting_df_expanded %>% 
   group_by(filename) %>% 
@@ -370,20 +368,28 @@ subset_disc%>%
   group_by(filename) %>% 
   
   ## finding choice_reaction_time
-  choice_reaction_time <- ddply(subset_disc, .(filename), transform, choicereactiontime=timefromstart-timefromstart[codes == -100])
+  choice_reaction_time <- plyr::ddply(subset_disc, .(filename), transform, choicereactiontime=timefromstart-timefromstart[codes == -100])
 subset_disc %>% dplyr::filter(codes == -6|!is.na(reward))
 
 ## exploration  -- make sense of the data
 ## discounting_df_expanded %>% subset(codes %in% c(-6, -13) & subject == "46067" & delay == 4 & date == "2019-02-07")%>% distinct(adjustingamt, .keep_all = T) %>% View(.)
 ## discounting_df_expanded %>% subset(!is.na(adjustingamt) & subject == "46067" & delay == 4 & date == "2019-02-07")%>% distinct(adjustingamt, .keep_all = T) %>% View(.)
 
+
+subset_disc2 <- discounting_df_expanded %>% subset(filename %in% c("./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt", 
+                                                                  "./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt",
+                                                                  "./Ship1_Latin-square/2019-02-07_10h48m_Subject 46260.txt"))
+
+
 reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6, -11))
 rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(reactiontimes$codes == -100))), function(x){
   x <- x %>% 
-    mutate(rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[2] - x$timefromstart[1], NA),
-           choice_rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[3] - x$timefromstart[2], NA),
-           rxn_time_imm = ifelse(x$codes[3] == -11, x$timefromstart[2] - x$timefromstart[1], NA),
-           choice_rxn_imm = ifelse(x$codes[3] == -11, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
+    mutate(
+      rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[2] - x$timefromstart[1], NA),
+      rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[2] - x$timefromstart[1], NA),
+      choice_rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[3] - x$timefromstart[2], NA),
+      rxn_time_imm = ifelse(x$codes[3] == -11, x$timefromstart[2] - x$timefromstart[1], NA),
+      choice_rxn_imm = ifelse(x$codes[3] == -11, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
     slice(1) %>% 
     dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   return(x) 
@@ -398,7 +404,8 @@ rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(
 rxntime_crt_avg <- rxn_time %>% 
   dplyr::group_by(filename) %>% 
   slice(31:n()) %>% 
-  dplyr::mutate(avg_rxn_time_del = mean(rxn_time_del, na.rm = T),
+  dplyr::mutate(avg_rxn_time_free = mean(rxn_time_free, na.rm = T),
+                avg_rxn_time_del = mean(rxn_time_del, na.rm = T),
                 avg_choice_rxn_time_del = mean(choice_rxn_time_del, na.rm = T),
                 avg_rxn_time_imm = mean(rxn_time_imm, na.rm = T), 
                 avg_choice_rxn_imm = mean(choice_rxn_imm, na.rm = T)) %>%
@@ -407,6 +414,84 @@ rxntime_crt_avg <- rxn_time %>%
   dplyr::filter(trialid == max(trialid)) ## won't be correct if you load plyr after dplyr
 
 rxntime_crt_avg %>% subset(avg_choice_rxn_time_del < 0)
+
+reactiontimes_subset <- reactiontimes %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
+rxn_time_subset_time <- lapply(split(reactiontimes_subset, cumsum(1:nrow(reactiontimes_subset) %in% which(reactiontimes_subset$codes == -100))), function(x){
+  x <- x %>% 
+    mutate(
+      rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[2] - x$timefromstart[1], NA),
+      choice_rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[3] - x$timefromstart[2], NA),
+      rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[2] - x$timefromstart[1], NA),
+      choice_rxn_time_del = ifelse(x$codes[3] == -13, x$timefromstart[3] - x$timefromstart[2], NA),
+      rxn_time_imm = ifelse(x$codes[3] == -11, x$timefromstart[2] - x$timefromstart[1], NA),
+      choice_rxn_imm = ifelse(x$codes[3] == -11, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
+    slice(1) %>% 
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+}) %>% rbindlist() %>% 
+  group_by(filename) %>% 
+  dplyr::mutate(trialid = dplyr::row_number(),
+                rxn_time_del = rxn_time_del/100,
+                rxn_time_imm = rxn_time_imm/100) %>% 
+  ungroup() # create individual trial information
+
+rxn_time_subset_time %>% 
+  dplyr::group_by(filename) %>% 
+  # slice(31:n()) %>% 
+  dplyr::mutate(avg_rxn_time_free = mean(rxn_time_free, na.rm = T),
+                avg_choice_rxn_time_free = mean(choice_rxn_time_free, na.rm = T),
+                avg_rxn_time_del = mean(rxn_time_del, na.rm = T),
+                avg_choice_rxn_time_del = mean(choice_rxn_time_del, na.rm = T),
+                avg_rxn_time_imm = mean(rxn_time_imm, na.rm = T), 
+                avg_choice_rxn_imm = mean(choice_rxn_imm, na.rm = T)) %>%
+  # mutate_at(vars(contains('avg')), as.numeric) %>% 
+  dplyr::select(-c(rxn_time_del, choice_rxn_time_del, rxn_time_imm, choice_rxn_imm)) %>% 
+  dplyr::filter(trialid == max(trialid)) ## won't be correct if you load plyr after dplyr
+
+## getting the timeout information 
+timeout_subset <- discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300)) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
+timeout_subset_time <- lapply(split(timeout_subset, cumsum(1:nrow(timeout_subset) %in% which(timeout_subset$codes == -20))), function(x){
+  x <- x %>% 
+    mutate(
+      timeout_duration_free = x$timefromstart[2] - x$timefromstart[1]) %>%
+    slice(1) %>%
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+}) %>% rbindlist() 
+
+timeout_subset_time %>% 
+  dplyr::group_by(filename) %>% 
+  # slice(31:n()) %>% 
+  dplyr::mutate(avg_timeout_dur_free = mean(timeout_duration_free, na.rm = T)) %>%
+  # mutate_at(vars(contains('avg')), as.numeric) %>% 
+  dplyr::select(-c(timeout_duration)) %>% 
+  slice(1) %>% 
+  dplyr::filter(trialid == head(trialid)) ## won't be correct if you load plyr after dplyr
+
+## getting collection time information
+# -11, -13, -5, -7, -105, -107, -205, -207, -15, -17, -115, -117, -215, -217, -25, -27
+collection_subset <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
+collection_subset_time <- lapply(split(collection_subset, cumsum(1:nrow(collection_subset) %in% which(collection_subset$codes %in% c(-11, -13)))), function(x){
+  x <- x %>% 
+    mutate(
+      collection_time = case_when(
+        x$codes[1] == -11 ~ x$timefromstart[match(-25, x$codes)] - x$timefromstart[1], 
+        x$codes[1] == -13 ~ x$timefromstart[match(-27, x$codes)] - x$timefromstart[1], 
+      ))%>%
+    slice(1) %>%
+    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  return(x) 
+}) %>% rbindlist() 
+
+timeout_subset_time %>% 
+  dplyr::group_by(filename) %>% 
+  # slice(31:n()) %>% 
+  dplyr::mutate(avg_timeout_dur_free = mean(timeout_duration_free, na.rm = T)) %>%
+  # mutate_at(vars(contains('avg')), as.numeric) %>% 
+  dplyr::select(-c(timeout_duration)) %>% 
+  slice(1)
+dplyr::filter(trialid == head(trialid)) ## won't be correct if you load plyr after dplyr
+
 
 
 ## testing on three files, each for diff subject
