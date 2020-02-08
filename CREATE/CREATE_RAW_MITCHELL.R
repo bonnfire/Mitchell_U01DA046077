@@ -19,12 +19,17 @@ library(lubridate)
 # Expectations: 110 subjects; provided 3960/3960 sessions for analysis
 
 # Each subject performed 6 iterations of each time delay 0s,2s, 4s, 8s, 16s, and 24sin the delay discounting task(89X36 sessions)
-# discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
-#                                 2, 4, 0, 8, 24, 16,
-#                                 8, 16, 4, 24, 2, 0,
-#                                 24, 0 ,16, 2, 8, 4,
-#                                 16, 24, 8, 0, 4, 2,
-#                                 0, 2, 24, 4, 16, 8) 
+discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
+                                2, 4, 0, 8, 24, 16,
+                                8, 16, 4, 24, 2, 0,
+                                24, 0 ,16, 2, 8, 4,
+                                16, 24, 8, 0, 4, 2,
+                                0, 2, 24, 4, 16, 8)
+latinsquare_discount_df <- data.frame(delay = discount_latinsquare_order,
+                                      order = 1:length(discount_latinsquare_order)) %>% 
+  group_by(delay) %>% mutate(rep = row_number()) %>% arrange(as.numeric(order)) %>% select(-order)
+
+
 # include code to unzip the files and duplicate the files from the original directory to the new one
 #### XXXXXXXXXXXXx
 
@@ -341,56 +346,39 @@ rxntime_crt_avg <- rxn_time_bytrial %>%
   dplyr::filter(trialid == max(trialid)) ## won't be correct if you load plyr after dplyr
 
 
-
+#************************************************************************************************************************************ LOOK HERE FOR MODEL
+#### MODEL ATM
 
 ### AVERAGE TIMEOUT DURATION (FREE)
-timeout <- discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300)) %>% subset(filename %in% c("./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt", 
-                                                                                                              "./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt",
-                                                                                                              "./Ship1_Latin-square/2019-02-07_10h48m_Subject 46260.txt"))
-timeout_time <- lapply(split(timeout, cumsum(1:nrow(timeout) %in% which(timeout$codes == -20))), function(x){
-  x <- x %>% 
-    mutate(
-      timeout_duration_free = x$timefromstart[2] - x$timefromstart[1]) %>%
-    slice(1) %>%
-    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
-  return(x) 
-}) %>% rbindlist() %>% 
-  dplyr::group_by(filename) %>% 
-  dplyr::mutate(avg_timeout_dur_free = mean(timeout_duration_free, na.rm = T)) %>%
-  dplyr::select(-c(timeout_duration_free)) %>% 
-  slice(1) 
-
-# add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
-
-
-
-timeout_subset <- discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300))  %>% subset(filename %in% c("./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt", 
-                                                                                                                      "./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt",
-                                                                                                                      "./Ship1_Latin-square/2019-02-07_10h48m_Subject 46260.txt")) %>% split(., .$filename) 
-
-  
-timeout_subset_time <- lapply(timeout_subset, function(x){
+timeout <- discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300)) %>% split(., .$filename) 
+timeout_duration <- lapply(timeout, function(x){
   y <- split(x, cumsum(1:nrow(x) %in% which(x$codes == -20)))
   timeout <- lapply(y, function(x){
     x <- x %>% mutate(
       timeout_duration_free = x$timefromstart[2] - x$timefromstart[1]) %>%
-    slice(1) %>%
-    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+      slice(1) %>%
+      dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
   }) %>% rbindlist()
   return(timeout)
-}) %>% rbindlist()
-
-
-# %>% rbindlist() 
-
-timeout_subset_time %>% 
+}) %>% rbindlist() %>% 
   dplyr::group_by(filename) %>% 
-  # slice(31:n()) %>% 
   dplyr::mutate(avg_timeout_dur_free = mean(timeout_duration_free, na.rm = T)) %>%
-  # mutate_at(vars(contains('avg')), as.numeric) %>% 
   dplyr::select(-c(timeout_duration_free)) %>% 
-  slice(1)
+  slice(1) %>% ungroup()
 
+# add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
+
+# add rep and delay information
+ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
+timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_timeout_dur_free)) + 
+  geom_boxplot(aes(color = sex)) 
+  
+  
 
 
 ### AVERAGE COLLECTION TIME (FREE)
@@ -663,6 +651,10 @@ events_subset_time$events_before_collect_imm %>% sum(na.rm = T)
 
 
 
+
+## FOR PLOTTING, NEED THE DELAY AND REP INFORMATION
+timeout_duration %>% subset(grepl("Ship1", filename)&subject=="45877") %>% arrange(subject, date) %>% 
+  
 
 
 

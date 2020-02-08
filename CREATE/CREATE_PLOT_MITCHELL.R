@@ -60,3 +60,8 @@ for (i in seq_along(discountingtraits_extract$var_abv)){
 }
 dev.off()
 
+
+## quick plots
+timeout_duration %>% 
+  ggplot(aes(avg_timeout_dur_free))
+ggplot()
