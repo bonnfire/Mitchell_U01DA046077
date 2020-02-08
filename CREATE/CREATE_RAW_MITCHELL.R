@@ -293,23 +293,45 @@ discountingevents <- discounting_df_expanded %>%
 
 
 ### AVERAGE REACTION TIME AND CHOICE REACTION TIME 
-reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6, -11)) 
-rxn_time <- lapply(split(reactiontimes, cumsum(1:nrow(reactiontimes) %in% which(reactiontimes$codes == -100))), function(x){
-  x <- x %>% 
-    mutate(
-      rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[2] - x$timefromstart[1], NA),
-      choice_rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[3] - x$timefromstart[2], NA)) %>% 
-    slice(1) %>% 
-    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
-  return(x) 
+reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6, -11)) %>% split(., .$filename) 
+rxn_time <- lapply(reactiontimes, function(x){
+  y <- split(x, cumsum(1:nrow(x) %in% which(x$codes == -100)))
+  reactiontimes <- lapply(y, function(x){
+    x <- x %>% 
+      mutate(
+        rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[2] - x$timefromstart[1], NA),
+        choice_rxn_time_free = ifelse(x$codes[2] == -6, x$timefromstart[3] - x$timefromstart[2], NA)) %>%
+      slice(1) %>%
+      dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  }) %>% rbindlist()
+  return(reactiontimes)
 }) %>% rbindlist() %>% 
-  group_by(filename) %>% 
+  dplyr::group_by(filename) %>% 
   dplyr::mutate(avg_rxn_time_free = mean(rxn_time_free, na.rm = T),
                 avg_choice_rxn_time_free = mean(choice_rxn_time_free, na.rm = T)) %>%
   slice(1) %>% 
-  select(-c("rxn_time_free", "choice_rxn_time_free"))
+  select(-c("rxn_time_free", "choice_rxn_time_free")) %>% ungroup()
+
+# add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
+
+# add rep and delay information
+ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
+rxn_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_rxn_time_free)) + 
+  geom_boxplot(aes(color = sex)) 
 
 
+rxn_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_choice_rxn_time_free)) + 
+  geom_boxplot(aes(color = sex)) 
 
 
 
@@ -382,32 +404,48 @@ timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>
 
 
 ### AVERAGE COLLECTION TIME (FREE)
-collection <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T))))
-collection_bytrial <- lapply(split(collection, cumsum(1:nrow(collection) %in% which(collection$codes %in% c(-11, -13)))), function(x){
-  x <- x %>% 
-    mutate(
-      collection_time = case_when(
-        x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
-        x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
-        x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
-        x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
-        TRUE ~ "NA"),
-      collection_time = as.numeric(collection_time)
-    ) %>%
-    slice(1) %>%
-    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
-  return(x) 
-}) %>% rbindlist() 
-
-collection_avg <- collection_bytrial %>% 
+collection <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% split(., .$filename) 
+collection_time <- lapply(collection, function(x){
+  y <- split(x, cumsum(1:nrow(x) %in% which(x$codes %in% c(-11, -13))))
+  collection <- lapply(y, function(x){
+    x <- x %>% 
+      mutate(
+        collection_time = case_when(
+          x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+          x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+          x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
+          x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
+          TRUE ~ "NA"),
+        collection_time = as.numeric(collection_time)
+      ) %>%
+      slice(1) %>%
+      dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  }) %>% rbindlist()
+  return(collection)
+}) %>% rbindlist() %>% 
   dplyr::group_by(filename) %>% 
   dplyr::mutate(avg_collection_time_free = mean(collection_time, na.rm = T)) %>%
   dplyr::select(-c(collection_time)) %>% 
-  slice(1) %>% 
-  dplyr::filter(trialid == head(trialid)) ## won't be correct if you load plyr after dplyr
+  slice(1) %>% ungroup()
+
+# add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
+
+# add rep and delay information
+ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
+collection_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_collection_time_free)) + 
+  geom_boxplot(aes(color = sex)) 
 
 
 
+
+
+
+## join the df's together to create discounting master table
 discountingvalidtraits <- left_join(discountingevents, rxn_time) %>% 
   left_join(., timeout_time_avg) %>% 
   left_join(., collection_avg) 
