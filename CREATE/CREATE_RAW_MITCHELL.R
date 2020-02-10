@@ -169,14 +169,14 @@ eventchoices_full <- eventchoices %>%
 
 
 # extract delay information to be joined by filename
-readdelay_discounting <- function(x){
-  delay <- fread(paste0("sed -n '61p' ", "'", x, "'"))
-  delay$filename <- x
-  return(delay)
-}
-readdelay_discounting_df <- lapply(discounting_filenames,readdelay_discounting) %>% rbindlist() %>% 
-  dplyr::rename("delay" = "V1") %>% 
-  mutate(delay = mgsub(delay, c(1, 2000, 4000, 8000, 16000, 24000), c(0, 2, 4, 8, 16, 24)))
+# readdelay_discounting <- function(x){
+#   delay <- fread(paste0("sed -n '61p' ", "'", x, "'"))
+#   delay$filename <- x
+#   return(delay)
+# }
+# readdelay_discounting_df <- lapply(discounting_filenames,readdelay_discounting) %>% rbindlist() %>% 
+#   dplyr::rename("delay" = "V1") %>% 
+#   mutate(delay = mgsub(delay, c(1, 2000, 4000, 8000, 16000, 24000), c(0, 2, 4, 8, 16, 24)))
 
 # extract event and codes data
 readdiscounting <- function(x){
@@ -247,8 +247,8 @@ discounting_squadbox %<>%
   rename("box" = "1",
          "squad" = "2")
 
-discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename") %>% 
-  left_join(., readdelay_discounting_df)
+discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename")  
+# left_join(., readdelay_discounting_df)
 ## check if the within file date information matches with filename information
 
 ## extract other variables
@@ -325,28 +325,6 @@ rxn_time <- lapply(reactiontimes, function(x){
 
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
-# add rep and delay information
-rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_rxn_time_free)) + 
-  geom_boxplot(aes(color = cohort)) + 
-  facet_grid( ~ sex)
-
-
-rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_choice_rxn_time_free)) + 
-  geom_boxplot(aes(color = cohort)) + 
-  facet_grid( ~ sex)
-
-
-
 ### AVERAGE TIMES (FROM SHIPMENT MACROS) ** CHECK IN TO SEE IF WE NEED THESE
 reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6, -11)) %>% subset(filename %in% c("./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt", 
                                                                                                                  "./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt",
@@ -379,9 +357,8 @@ rxntime_crt_avg <- rxn_time_bytrial %>%
   dplyr::select(-c(rxn_time_del, choice_rxn_time_del, rxn_time_imm, choice_rxn_imm)) %>% 
   dplyr::filter(trialid == max(trialid)) ## won't be correct if you load plyr after dplyr
 
-
-#************************************************************************************************************************************ LOOK HERE FOR MODEL
-#### MODEL ATM
+### AVERAGE TIMES (FROM SHIPMENT MACROS) ** CHECK IN TO SEE IF WE NEED THESE
+# ********************** ABOVE ************************************************************************************
 
 ### AVERAGE TIMEOUT DURATION (FREE)
 timeout <- discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300)) %>% split(., .$filename) 
@@ -401,20 +378,6 @@ timeout_duration <- lapply(timeout, function(x){
   slice(1) %>% ungroup()
 
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
-
-# add rep and delay information
-ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
-timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_timeout_dur_free)) + 
-  geom_boxplot(aes(color = sex)) +     
-  labs(title = paste0("Average Timeout Duration", "_Raw_Data_U01_Mitchell", "\n", "By delay"), y = "Average Timeout Duration") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
-        axis.text.y = element_text(size = 15))
-  
   
 
 
@@ -442,29 +405,53 @@ collection_time <- lapply(collection, function(x){
   dplyr::mutate(avg_collection_time_free = mean(collection_time, na.rm = T)) %>%
   dplyr::select(-c(collection_time)) %>% 
   slice(1) %>% ungroup()
-
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
-# add rep and delay information
-ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
-collection_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_collection_time_free)) + 
-  geom_boxplot(aes(color = sex)) 
 
 
+
+## troubleshoot average collection time: 
+
+collection_subset <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% subset(filename %in% c("./Ship2_Latin-square/2019-05-17_12h17m_Subject 46764.txt")) %>% split(., .$filename)
+collection_time <- lapply(collection_subset, function(x){
+  y <- split(x, cumsum(1:nrow(x) %in% which(x$codes %in% c(-11, -13))))
+  collection <- lapply(y, function(x){
+    x <- x %>% 
+      mutate(
+        collection_time = case_when(
+          x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+          x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+          x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
+          x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
+          TRUE ~ "NA"),
+        collection_time = as.numeric(collection_time)
+      ) %>%
+      slice(1) %>%
+      dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+  }) %>% rbindlist()
+  return(collection)
+}) %>% rbindlist() %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(avg_collection_time_free = mean(collection_time, na.rm = T)) %>%
+  dplyr::select(-c(collection_time)) %>% 
+  slice(1) %>% ungroup()
+# add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
 
 
 
 ## join the df's together to create discounting master table
-discountingvalidtraits <- left_join(discountingevents, rxn_time) %>% 
-  left_join(., timeout_time_avg) %>% 
-  left_join(., collection_avg) 
+discountingvalidtraits <- list("discountingevents" = discountingevents, 
+                               "rxn_time" = rxn_time,
+                               "timeout_duration" = timeout_duration,
+                               "collection_time" = collection_time
+                               ) %>% do.call(cbind, .)
+discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] 
+names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
 
+
+## XX figure out how to remove the rep variable
+## 3 traits that we should be cautious about rn are: events_before_center_fi and fd; and avg_collection_time_free 
 
 
 

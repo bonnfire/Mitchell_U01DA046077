@@ -1,6 +1,30 @@
 ## CREATE PLOTS
 
 ## merge on metadata
+# add rep and delay information
+# examples of 
+
+rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_rxn_time_free)) + ### XXX CHANGE THE FOR LOOP HERE ## NOTE THE OUTLIERS (POSITIVE)
+  geom_boxplot(aes(color = cohort)) + 
+  facet_grid( ~ sex)
+
+
+rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_choice_rxn_time_free)) + ### XXX NOTE THE NEGATIVE OUTLIERS HERE
+  geom_boxplot(aes(color = cohort)) + 
+  facet_grid( ~ sex)
+
+
+
 discountingvalidtraits_graph <- discountingvalidtraits %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
