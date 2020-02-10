@@ -24,13 +24,27 @@ rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>%
   facet_grid( ~ sex)
 
 
+timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
+  arrange(delay) %>% 
+  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
+  ggplot(aes(x = delay, y = avg_timeout_dur_free)) + 
+  geom_boxplot(aes(color = sex)) +     
+  labs(title = paste0("Average Timeout Duration", "_Raw_Data_U01_Mitchell", "\n", "By delay"), y = "Average Timeout Duration") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
+        axis.text.y = element_text(size = 15))
+
+avg_collection_time_free
+
 
 discountingvalidtraits_graph <- discountingvalidtraits %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
-  mutate(experiment_age = round(as.numeric(date - dob)), 0) %>% 
+  left_join(metadata, by = c("cohort", "rfid")) %>% 
+  mutate(experimentage = round(as.numeric(date - dob)), 0) %>% 
   select(cohort, rfid, everything()) %>% 
-  select(-c(filename, dob), filename) 
+  select(-c(filename, dob, rep, `0`), filename) 
   
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
@@ -40,18 +54,20 @@ discountingvalidtraits_graph <- discountingvalidtraits %>%
 discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T) %>% as.character(),
                                     var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
                                                   "number of forced trials", "number of free choice events before center nose pose", "number of forced delay events before center",
-                                                  "average reaction times from start to center on the delayed side", "average reaction times from center to choice on the delayed side",
-                                                  "average choice reaction times from start to center on the immediate side", "average choice reaction times from center to choice on the immediate side", 
-                                                  "experiment age")) %>% 
+                                                  "number of forced immediate events before center", "total events prior to center nose poke", "events prior to free choice", 
+                                                  "events prior to forced delay choice", "events prior to forced immediate choice", "total events prior to choice",
+                                                  "events during free choice timeout", "events during forced delay timeout", "events during forced immediate timeout", "total events during timeout",
+                                                  "average reaction time for free choice", "average choice reaction time for free choice", 
+                                                  "average timeout duration for free choice", "average collection time for free choice")) %>% 
+                                                  # "average reaction times from start to center on the delayed side", "average reaction times from center to choice on the delayed side",
+                                                  # "average choice reaction times from start to center on the immediate side", "average choice reaction times from center to choice on the immediate side", 
+                                                  # "experiment age")) %>% 
   mutate(var_abv = unlist(var_abv) %>% as.character,
          var_graph = unlist(var_graph) %>% as.character)
 
 discountingtraits <- grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T)
 
-pdf("mitchell_discounting.pdf", onefile = T)
-plot_list = list()
-plot_compare_list = list()
-
+pdf("mitchell_discounting_raw.pdf", onefile = T)
 for (i in seq_along(discountingtraits_extract$var_abv)){
 
   # plot_by_cohort <- ggplot(discountingvalidtraits_graph, aes(x = cohort, group = cohort)) +
@@ -84,8 +100,3 @@ for (i in seq_along(discountingtraits_extract$var_abv)){
 }
 dev.off()
 
-
-## quick plots
-timeout_duration %>% 
-  ggplot(aes(avg_timeout_dur_free))
-ggplot()
