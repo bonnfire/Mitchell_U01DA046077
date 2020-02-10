@@ -27,8 +27,19 @@ discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
                                 0, 2, 24, 4, 16, 8)
 latinsquare_discount_df <- data.frame(delay = discount_latinsquare_order,
                                       order = 1:length(discount_latinsquare_order)) %>% 
-  group_by(delay) %>% mutate(rep = row_number()) %>% arrange(as.numeric(order)) %>% select(-order)
+  group_by(delay) %>% mutate(rep = row_number()) %>% arrange(as.numeric(order)) %>% select(-order) %>% 
+  ungroup()
 
+
+ship1_2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 99), ] 
+fix_46260 <- latinsquare_discount_df %>% dplyr::filter(!(delay == 4 & rep == 2),!(delay == 2 & rep == 1)) %>% 
+  add_row(delay = 4, rep = 2, .before = 3) # subject 100 in order
+ship1_2_bind <- rbind(ship1_2_bind, fix_46260)
+ship1_2_bind <- rbind(ship1_2_bind, latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 5), ])
+fix_46266 <- latinsquare_discount_df %>% dplyr::filter(!(delay == 8 & rep == 2),!(delay == 2 & rep == 2)) %>% 
+  add_row(delay = 8, rep = 2, .before = 7) # subject 106 in order 
+ship1_2_bind <- rbind(ship1_2_bind, fix_46266)
+ship1_2_bind <- rbind(ship1_2_bind, latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 93), ]) # total 199 subjects
 
 # include code to unzip the files and duplicate the files from the original directory to the new one
 #### XXXXXXXXXXXXx
@@ -293,7 +304,7 @@ discountingevents <- discounting_df_expanded %>%
 
 
 ### AVERAGE REACTION TIME AND CHOICE REACTION TIME 
-reactiontimes <- discounting_df_expanded %>% subset(codes %in% c(-100, -13, -6, -11)) %>% split(., .$filename) 
+reactiontimes <- discounting_df_expanded %>% select(-rep) %>% subset(codes %in% c(-100, -13, -6, -11)) %>% split(., .$filename) 
 rxn_time <- lapply(reactiontimes, function(x){
   y <- split(x, cumsum(1:nrow(x) %in% which(x$codes == -100)))
   reactiontimes <- lapply(y, function(x){
@@ -315,7 +326,7 @@ rxn_time <- lapply(reactiontimes, function(x){
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
 # add rep and delay information
-ship2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 110), ] # for 110 subjects
+
 rxn_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
@@ -398,7 +409,10 @@ timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>
   arrange(delay) %>% 
   mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
   ggplot(aes(x = delay, y = avg_timeout_dur_free)) + 
-  geom_boxplot(aes(color = sex)) 
+  geom_boxplot(aes(color = sex)) +     
+  labs(title = paste0("Average Timeout Duration", "_Raw_Data_U01_Mitchell", "\n", "By delay"), y = "Average Timeout Duration") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
+        axis.text.y = element_text(size = 15))
   
   
 
