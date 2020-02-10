@@ -326,23 +326,24 @@ rxn_time <- lapply(reactiontimes, function(x){
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
 # add rep and delay information
-
-rxn_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
   arrange(delay) %>% 
   mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
   ggplot(aes(x = delay, y = avg_rxn_time_free)) + 
-  geom_boxplot(aes(color = sex)) 
+  geom_boxplot(aes(color = cohort)) + 
+  facet_grid( ~ sex)
 
 
-rxn_time %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
+rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
   arrange(delay) %>% 
   mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
   ggplot(aes(x = delay, y = avg_choice_rxn_time_free)) + 
-  geom_boxplot(aes(color = sex)) 
+  geom_boxplot(aes(color = cohort)) + 
+  facet_grid( ~ sex)
 
 
 
