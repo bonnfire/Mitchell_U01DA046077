@@ -693,7 +693,7 @@ events_subset_time$events_before_collect_imm %>% sum(na.rm = T)
 
 
 ## FOR PLOTTING, NEED THE DELAY AND REP INFORMATION
-timeout_duration %>% subset(grepl("Ship1", filename)&subject=="45877") %>% arrange(subject, date) %>% 
+# timeout_duration %>% subset(grepl("Ship1", filename)&subject=="45877") %>% arrange(subject, date) %>% 
   
 
 
@@ -752,3 +752,18 @@ timeout_duration %>% subset(grepl("Ship1", filename)&subject=="45877") %>% arran
 #########################################
 ############ LOCOMOTOR ##################
 #########################################
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-locomotor")
+
+
+locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
+locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F) %>% 
+  rbindlist(fill = T) %>% clean_names %>% select_if(~sum(!is.na(.)) > 0) 
+locomotor_avg <- locomotor_raw %>% 
+  group_by(experiment) %>% 
+  summarize(avg_)
+  
+  
+  
+  
+  
+  

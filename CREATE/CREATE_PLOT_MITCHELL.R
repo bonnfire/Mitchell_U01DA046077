@@ -2,50 +2,19 @@
 
 ## merge on metadata
 # add rep and delay information
-# examples of 
-
-rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_rxn_time_free)) + ### XXX CHANGE THE FOR LOOP HERE ## NOTE THE OUTLIERS (POSITIVE)
-  geom_boxplot(aes(color = cohort)) + 
-  facet_grid( ~ sex)
 
 
-rxn_time %>% arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_choice_rxn_time_free)) + ### XXX NOTE THE NEGATIVE OUTLIERS HERE
-  geom_boxplot(aes(color = cohort)) + 
-  facet_grid( ~ sex)
-
-
-timeout_duration %>% dplyr::filter(grepl("Ship2", filename)) %>% select(-rep) %>% arrange(subject, date) %>% bind_cols(., ship2_bind) %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(., WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = c("subject" = "rfid")) %>% 
-  arrange(delay) %>% 
-  mutate(delay = reorder(delay, sort(as.numeric(delay)))) %>% 
-  ggplot(aes(x = delay, y = avg_timeout_dur_free)) + 
-  geom_boxplot(aes(color = sex)) +     
-  labs(title = paste0("Average Timeout Duration", "_Raw_Data_U01_Mitchell", "\n", "By delay"), y = "Average Timeout Duration") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 15),
-        axis.text.y = element_text(size = 15))
-
-avg_collection_time_free
-
+## positive outliers here: avg_rxn_time_free, negative outliers here: avg_choice_rxn_time_free
 
 discountingvalidtraits_graph <- discountingvalidtraits %>% 
+  arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
   left_join(metadata, by = c("cohort", "rfid")) %>% 
   mutate(experimentage = round(as.numeric(date - dob)), 0) %>% 
   select(cohort, rfid, everything()) %>% 
-  select(-c(filename, dob, rep, `0`), filename) 
-  
+  select(-c(filename, dob, rep, `0`), filename)
+discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
 #   mutate(rfid = str_sub(rfid,-5,-1)) %>% 
@@ -65,7 +34,6 @@ discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(disc
   mutate(var_abv = unlist(var_abv) %>% as.character,
          var_graph = unlist(var_graph) %>% as.character)
 
-discountingtraits <- grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T)
 
 pdf("mitchell_discounting_raw.pdf", onefile = T)
 for (i in seq_along(discountingtraits_extract$var_abv)){
@@ -81,21 +49,31 @@ for (i in seq_along(discountingtraits_extract$var_abv)){
   #   geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
   #   labs(title = paste0(toupper(discountingtraits_extract$var_graph[i]), "_Discounting_U01_Mitchell", "\n"), x = "Box", fill = "Box") +  # scale_fill_discrete(name = "New Legend Title")
   #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-  plot_by_sex <- ggplot(discountingvalidtraits_graph, aes(x = as.factor(sex), group = as.factor(sex))) +
-    geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
-    geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
+  
+  # plot_by_sex <- discountingvalidtraits_graph %>% 
+  #   ggplot(aes(x = as.factor(sex), group = as.factor(sex))) +
+  #   geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
+  #   geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
+  #   labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]), 
+  #                                "_Discounting_U01_Mitchell", "\n"), width = 100), 
+  #                         x = "Sex", 
+  #                         fill = "Sex") +  # scale_fill_discrete(name = "New Legend Title")
+  #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  plot_by_cohort_sex = discountingvalidtraits_graph %>% 
+    ggplot(aes(x = delay, color = cohort)) + ### XXX CHANGE THE FOR LOOP HERE ## NOTE THE OUTLIERS (POSITIVE)
+    geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.5) + 
+    facet_grid( ~ sex) + 
     labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]), 
-                                 "_Discounting_U01_Mitchell", "\n"), width = 100), 
-                          x = "Sex", 
-                          fill = "Sex") +  # scale_fill_discrete(name = "New Legend Title")
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+                                          "_Discounting_U01_Mitchell", "\n"), width = 60),
+         y = discountingtraits_extract$var_graph[i])
+  
   
 
   # print(plot_by_cohort)
   # print(plot_by_box)
-  print(plot_by_sex)
-  
+  # print(plot_by_sex)
+  print(plot_by_cohort_sex)
   
 }
 dev.off()
