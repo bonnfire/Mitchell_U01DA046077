@@ -770,11 +770,16 @@ locomotor_raw <- locomotor_raw %>%
   left_join(dates, by = c("experiment", "cohort")) %>%
   mutate(date = lubridate::mdy(date), 
          dob = lubridate::ymd(as.character(dob)),
-         experimentage = as.numeric(difftime(date, dob, units = "days"))) 
+         experimentage = as.numeric(difftime(date, dob, units = "days")),
+         time = str_match(experiment, "U01-(.*?)-.*")[,2]) 
 # %>% 
 #   select(-one_of("date", "dob"))
 
-locomotor_raw %>% ggplot(aes(x = cohort, y = experimentage, fill = sex)) + geom_boxplot()
+locomotor_raw %>% ggplot(aes(x = cohort, y = experimentage, fill = sex, linetype =time )) + 
+  geom_boxplot() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+                         axis.text.y = element_text(size = 15),
+                         legend.text = element_text(size = 15) ) +
+  labs(title = "Boxplots of Experiment age at locomotor time 1 and 2 by cohort")
 locomotor_raw %>% subset(is.na(date)) ## dropped animals
 # NOT NA locomotor_raw %>% select(cohort, sex, rfid, experiment) %>% distinct(rfid, experiment) %>% group_by(rfid) %>% add_count(rfid) %>% ungroup() %>% subset(n!=1)
 
