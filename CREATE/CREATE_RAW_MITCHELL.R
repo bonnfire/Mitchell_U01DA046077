@@ -760,7 +760,11 @@ locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep
   rbindlist(fill = T) %>% clean_names %>% select_if(~sum(!is.na(.)) > 0) 
 locomotor_avg <- locomotor_raw %>% 
   group_by(experiment) %>% 
-  summarize(avg_)
+  summarize(avg_total_distance_cm = mean(total_distance_cm),
+            avg_rest_time_s = mean(rest_time_s),
+            avg_rest_episode_count = mean(rest_episode_count),
+            avg_movement_time_s = mean(movement_time_s), 
+            avg_movement_episode_count = mean(movement_episode_count))
   
   
   
