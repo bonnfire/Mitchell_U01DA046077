@@ -758,16 +758,18 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA04
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
 locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F) %>% 
   rbindlist(fill = T) %>% clean_names %>% select_if(~sum(!is.na(.)) > 0) 
-locomotor_avg <- locomotor_raw %>% 
-  group_by(experiment) %>% 
-  summarize(avg_total_distance_cm = mean(total_distance_cm),
-            avg_rest_time_s = mean(rest_time_s),
-            avg_rest_episode_count = mean(rest_episode_count),
-            avg_movement_time_s = mean(movement_time_s), 
-            avg_movement_episode_count = mean(movement_episode_count))
-  
-  
-  
-  
+
+
+locomotors_vars <- c("total_distance_cm", "rest_time_s", "rest_episode_count", "movement_time_s", "movement_episode_count", "vertical_activity_count", 
+                     "margin_time_legacy_s", "center_time_legacy_s")
+my.summary = function(x) list(mean = mean(x), 
+                              sd = sd(x),
+                              skew = moments::skewness(x), 
+                              kurt = moments::kurtosis(x), 
+                              sum = sum(x))
+locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
+                     by = experiment, 
+                     .SDcols = locomotors_vars]
+
   
   
