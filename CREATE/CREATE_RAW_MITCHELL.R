@@ -753,11 +753,30 @@ events_subset_time$events_before_collect_imm %>% sum(na.rm = T)
 ############ LOCOMOTOR ##################
 #########################################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-locomotor")
-
-
+dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
+  separate(V1, into=c("experiment", "date"), sep = ":") %>% 
+  mutate(cohort = sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0"),
+         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3])
+  
+  
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
-locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F) %>% 
-  rbindlist(fill = T) %>% clean_names %>% select_if(~sum(!is.na(.)) > 0) 
+locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F)
+names(locomotor_raw) <- str_match(locomotorfilenames, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]
+locomotor_raw <- locomotor_raw %>%
+  rbindlist(idcol = "experiment", fill = T) %>% select(-EXPERIMENT) %>% 
+  clean_names %>% select_if(~sum(!is.na(.)) > 0) %>% 
+  mutate(subject_id = paste0("9330003200", subject_id)) %>% 
+  left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject_id")) %>% 
+  left_join(dates, by = c("experiment", "cohort")) %>%
+  mutate(date = lubridate::mdy(date), 
+         dob = lubridate::ymd(as.character(dob)),
+         experimentage = as.numeric(difftime(date, dob, units = "days"))) 
+# %>% 
+#   select(-one_of("date", "dob"))
+
+locomotor_raw %>% ggplot(aes(x = cohort, y = experimentage, fill = sex)) + geom_boxplot()
+locomotor_raw %>% subset(is.na(date)) ## dropped animals
+# NOT NA locomotor_raw %>% select(cohort, sex, rfid, experiment) %>% distinct(rfid, experiment) %>% group_by(rfid) %>% add_count(rfid) %>% ungroup() %>% subset(n!=1)
 
 
 locomotors_vars <- c("total_distance_cm", "rest_time_s", "rest_episode_count", "movement_time_s", "movement_episode_count", "vertical_activity_count", 
@@ -768,7 +787,7 @@ my.summary = function(x) list(mean = mean(x),
                               kurt = moments::kurtosis(x), 
                               sum = sum(x))
 locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
-                     by = experiment, 
+                     by = .(experiment, cage, subject_id, batch), 
                      .SDcols = locomotors_vars]
 
   
