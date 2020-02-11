@@ -20,6 +20,14 @@ discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay,
 #   mutate(rfid = str_sub(rfid,-5,-1)) %>% 
 
 
+## how much raw data do we have for spleen/ceca data 
+mitchell_spleenceca_toprocess %>% left_join(.,
+                                            discountingvalidtraits_graph %>% 
+                                              distinct(rfid, assignedlever),
+                                            by = c("rfid")) %>%
+  subset(is.na(assignedlever))
+
+
 discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T) %>% as.character(),
                                     var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
                                                   "number of forced trials", "number of free choice events before center nose pose", "number of forced delay events before center",
