@@ -621,15 +621,15 @@ timeout_subset_time %>%
 
 ## getting collection time information
 # -11, -13, -5, -7, -105, -107, -205, -207, -15, -17, -115, -117, -215, -217, -25, -27
-collection_subset <- discounting_df_expanded %>% subset(codes %in% c(-100, -11, -13, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
-collection_subset_time <- lapply(split(collection_subset, cumsum(1:nrow(collection_subset) %in% which(collection_subset$codes %in% c(-11, -13)))), function(x){
+collection_subset <- discounting_df_expanded %>% subset(codes %in% c(-100, -51, -53, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
+collection_subset_time <- lapply(split(collection_subset, cumsum(1:nrow(collection_subset) %in% which(collection_subset$codes %in% c(-51, -53)))), function(x){
   x <- x %>% 
     mutate(
       collection_time = case_when(
-        x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
-        x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
-        x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
-        x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
+        x$codes[1] == -51 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+        x$codes[1] == -53 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]),
+        x$codes[1] == -51 & any(grepl("5$", x$codes)) == F ~ "NA",
+        x$codes[1] == -53 & any(grepl("7$", x$codes)) == F ~ "NA",
         TRUE ~ "NA"),
       collection_time = as.numeric(collection_time)
       ) %>%
@@ -792,8 +792,10 @@ my.summary = function(x) list(mean = mean(x),
                               kurt = moments::kurtosis(x), 
                               sum = sum(x))
 locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
-                     by = .(experiment, cage, subject_id, batch), 
+                     by = .(experiment, cage, rfid, batch, time), 
                      .SDcols = locomotors_vars]
 
+## how much raw data do we have for spleen/ceca data 
+mitchell_spleenceca_toprocess %>% left_join(., locomotor_avg, by = c("rfid" = "subject_id")) %>% subset(is.na(total_distance_cm.mean))
   
   

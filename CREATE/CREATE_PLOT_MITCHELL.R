@@ -14,7 +14,7 @@ discountingvalidtraits_graph <- discountingvalidtraits %>%
   mutate(experimentage = round(as.numeric(date - dob)), 0) %>% 
   select(cohort, rfid, everything()) %>% 
   select(-c(filename, dob, rep, `0`), filename)
-discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
+  discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
 #   mutate(rfid = str_sub(rfid,-5,-1)) %>% 
@@ -30,7 +30,7 @@ mitchell_spleenceca_toprocess %>% left_join(.,
 
 discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T) %>% as.character(),
                                     var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
-                                                  "number of forced trials", "number of free choice events before center nose pose", "number of forced delay events before center",
+                                                  "number of forced trials", "number of free choice events before center nose poke", "number of forced delay events before center",
                                                   "number of forced immediate events before center", "total events prior to center nose poke", "events prior to free choice", 
                                                   "events prior to forced delay choice", "events prior to forced immediate choice", "total events prior to choice",
                                                   "events during free choice timeout", "events during forced delay timeout", "events during forced immediate timeout", "total events during timeout",
@@ -42,7 +42,7 @@ discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(disc
   mutate(var_abv = unlist(var_abv) %>% as.character,
          var_graph = unlist(var_graph) %>% as.character)
 
-
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
 pdf("mitchell_discounting_raw.pdf", onefile = T)
 for (i in seq_along(discountingtraits_extract$var_abv)){
 
@@ -99,9 +99,9 @@ dev.off()
 
 
 
-locomotor_avg[, subject_id := paste0("9330003200", subject_id)]
-locomotorvalidtraits_graph <- locomotor_avg[setDT(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")]), on = c("subject_id == rfid")]
-locomotorvalidtraits_graph[, time := str_match(experiment, "U01-(.*?)-.*")[,2]]   
+# locomotor_avg[, rfid := paste0("9330003200", rfid)] # already done to locomotor_raw
+locomotorvalidtraits_graph <- locomotor_avg[setDT(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")]), on = c("rfid")]
+# locomotorvalidtraits_graph[, time := str_match(experiment, "U01-(.*?)-.*")[,2]]   
 # locomotortraits_extract <- data.frame(var_abv = grep(pattern = ".", names(locomotorvalidtraits_graph), perl = T, value = T) %>% as.character(),
 #                                         var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
 #                                                       "number of forced trials", "number of free choice events before center nose pose", "number of forced delay events before center",
@@ -117,6 +117,7 @@ locomotorvalidtraits_graph[, time := str_match(experiment, "U01-(.*?)-.*")[,2]]
 #          var_graph = unlist(var_graph) %>% as.character)
 locomotortraits_extract <- grep(pattern = "[.]", names(locomotorvalidtraits_graph), perl = T, value = T) %>% as.character()
                                       
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
 pdf("mitchell_locomotor_raw.pdf", onefile = T)
 for (i in seq_along(locomotortraits_extract)){
   
@@ -143,12 +144,13 @@ for (i in seq_along(locomotortraits_extract)){
   #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   plot_by_cohort_sex = locomotorvalidtraits_graph %>% 
-    ggplot(aes(x = delay, color = cohort)) + ### XXX CHANGE THE FOR LOOP HERE ## NOTE THE OUTLIERS (POSITIVE)
-    geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.5) + 
-    facet_grid( ~ sex) + 
-    labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]), 
+    subset(!is.na(time)) %>% 
+    ggplot(aes(x = time, color = sex)) +
+    geom_boxplot(aes_string(y = locomotortraits_extract[i]), outlier.size = 0.5) + 
+    facet_grid( ~ cohort) + 
+    labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
                                           "_Discounting_U01_Mitchell", "\n"), width = 60),
-         y = discountingtraits_extract$var_graph[i])
+         y = locomotortraits_extract[i])
   
   
   
