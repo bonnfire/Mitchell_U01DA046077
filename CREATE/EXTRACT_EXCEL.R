@@ -21,3 +21,21 @@ metadata <- lapply(metadata, function(x){
   return(x)
 })
 metadata <- metadata %>% rbindlist(idcol = "cohort")
+
+
+
+### extract the data created from michelle's lab
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information/KG Python Script Materials")
+read_excel_values_discounting <- function(xlname){
+  path_sheetnames <- excel_sheets(xlname)
+  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, range = cell_cols("B")) # only extract the second column bc this one has values, will assign the column names later
+  df <- lapply(df, function(x){
+    x <- x %>% t() %>% 
+      as.data.frame()
+    rownames(x) <- NULL
+    return(x)
+  })
+  names(df) <- path_sheetnames
+  return(df)
+}
+mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelOutput.xlsm") %>% rbindlist()
