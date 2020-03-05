@@ -123,45 +123,41 @@ discounting_df_expanded <- discounting_df %>%
                 date = as.POSIXct(date)) %>% 
   dplyr::arrange(subject, date) %>% 
   dplyr::group_by(filename) %>% 
-  dplyr::mutate(rep = dplyr::row_number())
+  dplyr::mutate(event_order = dplyr::row_number()) #ensure that events are in order
 
 # extract squad (?) and box information
-readsquadbox <- function(x){
-  squadbox <- fread(paste0("sed -n '9p; 10p' ", "'", x, "'"))
-  # squadbox$box <- fread(paste0("sed -n '10p' ", "'", x, "'"))
-  # squadbox %<>% rename("squad" = "V1")
-  squadbox$filename <- x
-  return(squadbox)
-}
-discounting_squadbox <- lapply(discounting_filenames, readsquadbox) %>% rbindlist(fill = T)
-discounting_squadbox %<>%
-  mutate(ind = rep(c(1, 2),length.out = n())) %<>%
-  group_by(ind) %<>%
-  mutate(id = row_number()) %<>%
-  spread(ind, V1) %<>%
-  select(-id) %<>% 
-  rename("box" = "1",
-         "squad" = "2")
 
-discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename")  
-# left_join(., readdelay_discounting_df)
+
+### COME BACK TO THIS #### XX 
+# readsquadbox <- function(x){
+#   squadbox <- fread(paste0("sed -n '9p; 10p' ", "'", x, "'"))
+#   # squadbox$box <- fread(paste0("sed -n '10p' ", "'", x, "'"))
+#   # squadbox %<>% rename("squad" = "V1")
+#   squadbox$filename <- x
+#   return(squadbox)
+# }
+# discounting_squadbox <- lapply(discounting_filenames, readsquadbox) %>% rbindlist(fill = T)
+# discounting_squadbox %<>%
+#   mutate(ind = rep(c(1, 2),length.out = n())) %<>%
+#   group_by(ind) %<>%
+#   mutate(id = row_number()) %<>%
+#   spread(ind, V1) %<>%
+#   select(-id) %<>%
+#   rename("box" = "1",
+#          "squad" = "2")
+# 
+# discounting_df_expanded <- left_join(discounting_df_expanded, discounting_squadbox, by = "filename")
+
+####################### XXX 
+
 ## check if the within file date information matches with filename information
 
 ## extract other variables
 
-# total number of trials is free choice + forced delay + forced immediate
-# won't work, psuedocode discounting_df_expanded %>% dplyr::filter(filename=="./Ship1_Latin-square/2019-02-07_09h41m_Subject 46067.txt") %>% sum(#below)
-
-
-
-
-
-
-
-
 ### EVENTS PRIOR TO CENTER NOSE POKE, CHOICE, AND DURING TIMEOUT
 discountingevents <- discounting_df_expanded %>% 
-  group_by(filename, subject, date, time, box, squad) %>%
+  # group_by(filename, subject, date, time, box, squad) %>%
+  group_by(filename, subject, date, time) %>%
   summarize(
     tot_num_trials = length(timefromstart[codes %in% c("-100", "-200", "-300")]),
     tot_num_free = length(timefromstart[codes %in% c("-100")]),
@@ -195,14 +191,13 @@ discountingevents <- discounting_df_expanded %>%
                                events_during_to_fi),
     
   ) %>%
-  as.data.frame() 
+  as.data.frame() %>% 
+  ungroup()
 
 
 
 ### AVERAGE REACTION TIME AND CHOICE REACTION TIME 
-## XX THROW AWAY
-# reactiontimes <- 
-rxn_time <- lapply(discounting_df_expanded %>% select(-rep) %>% subset(codes %in% c(-100, -13, -6, -11)) %>% split(., .$filename) , function(x){
+rxn_time <- lapply(discounting_df_expanded %>% select(-event_order) %>% subset(codes %in% c(-100, -13, -6, -11)) %>% split(., .$filename), function(x){
   y <- split(x, cumsum(1:nrow(x) %in% which(x$codes == -100)))
   reactiontimes <- lapply(y, function(x){
     x <- x %>% 
@@ -258,9 +253,7 @@ rxntime_crt_avg <- rxn_time_bytrial %>%
 # ********************** ABOVE ************************************************************************************
 
 ### AVERAGE TIMEOUT DURATION (FREE)
-## XX THROW AWAY
-# timeout <- 
-timeout_duration <- lapply(discounting_df_expanded %>% subset(codes %in% c(-20, -100, -200, -300)) %>% split(., .$filename) , function(x){
+timeout_duration <- lapply(discounting_df_expanded %>% select(-event_order) %>% subset(codes %in% c(-20, -100, -200, -300)) %>% split(., .$filename) , function(x){
   y <- split(x, cumsum(1:nrow(x) %in% which(x$codes == -20)))
   timeout <- lapply(y, function(x){
     x <- x %>% mutate(
@@ -277,8 +270,7 @@ timeout_duration <- lapply(discounting_df_expanded %>% subset(codes %in% c(-20, 
 
 
 ### AVERAGE COLLECTION TIME (FREE)
-collection <- discounting_df_expanded %>% subset(codes %in% c(-100, -51, -53, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% split(., .$filename) 
-collection_time <- lapply(collection, function(x){
+collection_time <- lapply( discounting_df_expanded %>% select(-event_order) %>% subset(codes %in% c(-100, -51, -53, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% split(., .$filename) , function(x){
   y <- split(x, cumsum(1:nrow(x) %in% which(x$codes %in% c(-51, -53))))
   collection <- lapply(y, function(x){
     x <- x %>% 
@@ -303,15 +295,95 @@ collection_time <- lapply(collection, function(x){
 # add timeout_time_avg <- timeout_time_bytrial after the rbindlist() call to get the vectors by trial
 
 
+# EVENTS PRIOR TO IMMEDIATE REWARD COLLECTION
+## getting events prior to immediate reward collection 
+events_imm <- lapply(discounting_df_expanded %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% select(-event_order) %>% 
+                       subset(codes %in% c(-51, -53, -1, -3, -7, -6, 
+                                           -11, -13,
+                                           -101, -103, -107,
+                                           -201, -203, -207, 
+                                           -17, -16, 
+                                           -117, -116, 
+                                           -217, -216,
+                                           -27, -26,
+                                           -21, -23,
+                                           -127, -126, -121, -123, 
+                                           -227, -226, -221, -223,
+                                           -5, -15, -105,-205, -115, -215, -25, -125, -225)) %>% 
+                       split(., cumsum(1:nrow(.) %in% which(.$codes %in% c(-51, -53,-5, -15, -105,-205, -115, -215, -25, -125, -225)))), function(x){
+                         x <- x %>% 
+                           mutate(
+                             events_before_collect_imm = ifelse(x$codes[1] == -51, length(timefromstart[codes %in% c(-1, -3, -7, -6, 
+                                                                                                                     -11, -13,
+                                                                                                                     -101, -103, -107,
+                                                                                                                     -201, -203, -207, 
+                                                                                                                     -17, -16, 
+                                                                                                                     -117, -116, 
+                                                                                                                     -217, -216,
+                                                                                                                     -27, -26,
+                                                                                                                     -21, -23,
+                                                                                                                     -127, -126, -121, -123, 
+                                                                                                                     -227, -226, -221, -223)]), NA)) %>%  
+                           slice(1) %>%
+                           dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+                         return(x)
+                       }) %>% rbindlist() %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(avg_events_before_collect_imm = sum(events_before_collect_imm, na.rm = T)) %>%
+  dplyr::select(-c(events_before_collect_imm)) %>% 
+  slice(1) %>% ungroup() ## remove -125, -225 ## remove -125, -225
+
+
+# EVENTS PRIOR TO DELAYED REWARD COLLECTION
+## getting events prior to immediate reward collection 
+events_del <- lapply(discounting_df_expanded %>% select(-event_order) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% 
+                       subset(codes %in% c(-51, -53, -1, -3, -5, -6, 
+                                           -11, -13,
+                                           -101, -103, -105,
+                                           -201, -203, -205, 
+                                           -15, -16, 
+                                           -115, -116, 
+                                           -215, -216,
+                                           -25, -26,
+                                           -21, -23,
+                                           -125, -126, -121, -123, 
+                                           -225, -226, -221, -223,
+                                           -7, -107, -207, -17, -117, -217, -27, -127, -227)) %>% 
+                       split(., cumsum(1:nrow(.) %in% which(.$codes %in% c(-51, -53, -7, -107, -207, -17, -117, -217, -27, -127, -227)))), function(x){
+                         x <- x %>% 
+                           mutate(
+                             events_before_collect_del = ifelse(x$codes[1] == -53, length(timefromstart[codes %in% c(-51, -53, -1, -3, -5, -6, 
+                                                                                                                     -11, -13,
+                                                                                                                     -101, -103, -105,
+                                                                                                                     -201, -203, -205, 
+                                                                                                                     -15, -16, 
+                                                                                                                     -115, -116, 
+                                                                                                                     -215, -216,
+                                                                                                                     -25, -26,
+                                                                                                                     -21, -23,
+                                                                                                                     -125, -126, -121, -123, 
+                                                                                                                     -225, -226, -221, -223)]), NA)) %>%  
+                           slice(1) %>%
+                           dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+                         return(x)
+                       }) %>% rbindlist() %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(avg_events_before_collect_del = sum(events_before_collect_del, na.rm = T)) %>%
+  dplyr::select(-c(events_before_collect_del)) %>% 
+  slice(1) %>% ungroup() ## remove -125, -225
+                           
+                           
 
 
 ## join the df's together to create discounting master table
 discountingvalidtraits <- list("discountingevents" = discountingevents, 
                                "rxn_time" = rxn_time,
                                "timeout_duration" = timeout_duration,
-                               "collection_time" = collection_time
+                               "collection_time" = collection_time,
+                               "events_imm" = events_imm,
+                               "events_del" = events_del
                                ) %>% do.call(cbind, .)
-discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] 
+discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] ## remove duplicated columns, like subject, filename, etc
 names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
 
 
@@ -340,40 +412,8 @@ rxn_time_subset_time %>%
 
 
 
-## getting events prior to immediate reward collection 
-events_subset <- discounting_df_expanded %>% 
-  # subset(codes %in% c(-100, -11, -13, as.numeric(grep("(1|3)$", eventchoices_full$key, value = T)), -6)) %>% 
-  subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") 
-events_subset_time <- lapply(split(events_subset, cumsum(1:nrow(events_subset) %in% which(events_subset$codes %in% c(-11, -13)))), function(x){
-  x <- x %>% 
-    mutate(
-      events_before_collect_imm = ifelse(x$codes[1] == -11, length(timefromstart[codes %in% c(-1, -3, -7, -6, 
-                                                                                              -11, -13,
-                                                                                              -101, -103, -107,
-                                                                                              -201, -203, -207, 
-                                                                                              -17, -16, 
-                                                                                              -117, -116, 
-                                                                                              -217, -216,
-                                                                                              -27, -26,
-                                                                                              -21, -23,
-                                                                                              -125, -127, -126, -121, -123, 
-                                                                                              -225, -227, -226, -221, -223)]), NA) 
-      # events_before_collect_del = 
-      # collection_time = case_when(
-      #   x$codes[1] == -11 & any(grepl("5$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("5$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
-      #   x$codes[1] == -13 & any(grepl("7$", x$codes)) ~ as.character(min(x$timefromstart[match(as.numeric(grep("7$", eventchoices_full$key, value = T)), x$codes)], na.rm = T) - x$timefromstart[1]), 
-      #   x$codes[1] == -11 & any(grepl("5$", x$codes)) == F ~ "NA",
-      #   x$codes[1] == -13 & any(grepl("7$", x$codes)) == F ~ "NA",
-      #   TRUE ~ "NA"),
-      # collection_time = as.numeric(collection_time)
-      ) %>%
-    slice(1) %>%
-    dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
-  return(x) 
-}) %>% rbindlist() 
-
-events_subset_time$events_before_collect_imm %>% sum(na.rm = T)
-
+# lapply(discounting_df_expanded %>% select(-event_order) %>% 
+#           subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% subset(codes %in% c(-100, -51, as.numeric(grep("(5|7)$", eventchoices_full$key, value = T)))) %>% split(., .$filename) 
 
 
 
