@@ -38,4 +38,7 @@ read_excel_values_discounting <- function(xlname){
   names(df) <- path_sheetnames
   return(df)
 }
-mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelOutput.xlsm") %>% rbindlist()
+mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelOutput.xlsm") %>% rbindlist() %>% 
+  mutate_at(vars(one_of), as.character) %>% 
+  mutate_at(, as.numeric) %>%
+  mutate_at( , lubridate::ymd)
