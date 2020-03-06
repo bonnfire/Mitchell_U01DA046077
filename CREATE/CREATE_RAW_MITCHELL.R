@@ -297,7 +297,7 @@ collection_time <- lapply( discounting_df_expanded %>% select(-event_order) %>% 
 
 # EVENTS PRIOR TO IMMEDIATE REWARD COLLECTION
 ## getting events prior to immediate reward collection 
-events_imm <- lapply(discounting_df_expanded %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% select(-event_order) %>% 
+events_imm <- lapply(discounting_df_expanded %>% select(-event_order) %>% 
                        subset(codes %in% c(-51, -53, -1, -3, -7, -6, 
                                            -11, -13,
                                            -101, -103, -107,
@@ -336,7 +336,7 @@ events_imm <- lapply(discounting_df_expanded %>% subset(filename=="./Ship1_Latin
 
 # EVENTS PRIOR TO DELAYED REWARD COLLECTION
 ## getting events prior to immediate reward collection 
-events_del <- lapply(discounting_df_expanded %>% select(-event_order) %>% subset(filename=="./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% 
+events_del <- lapply(discounting_df_expanded %>% select(-event_order) %>% 
                        subset(codes %in% c(-51, -53, -1, -3, -5, -6, 
                                            -11, -13,
                                            -101, -103, -105,
@@ -382,9 +382,11 @@ discountingvalidtraits <- list("discountingevents" = discountingevents,
                                "collection_time" = collection_time,
                                "events_imm" = events_imm,
                                "events_del" = events_del
-                               ) %>% do.call(cbind, .)
+                               ) %>% do.call(cbind, .) 
 discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] ## remove duplicated columns, like subject, filename, etc
 names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
+discountingvalidtraits %<>% 
+  mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del)
 
 
 ## XX figure out how to remove the rep variable
