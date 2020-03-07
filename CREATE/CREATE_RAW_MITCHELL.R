@@ -375,20 +375,13 @@ events_del <- lapply(discounting_df_expanded %>%
 
 # REWARDS COLLECTED
 ## getting events prior to immediate reward collection 
-# rewards_collected <- 
-  
-lapply(discounting_df_expanded %>% 
-         subset(filename == "./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% 
+rewards_collected <- lapply(discounting_df_expanded %>%
          select(-event_order) %>% 
          subset(codes %in% c(-51, -53, 
                              -5,-105, -205, -15, -115, -215, -25, -125, -225,
                              -7, -107, -207, -17, -117, -217, -27, -127, -227)) %>% 
          split(., cumsum(1:nrow(.) %in% which(.$codes %in% c(-51, -53)))), function(x){
            x <- x %>% 
-             # dplyr::filter((x$codes[1] == -53 & codes %in% c( -53, -7, -107, -207, -17, -117, -217, -27, -127, -227)) | 
-             #                (x$codes[1] == -51 & codes %in% c( -51, -5, -15, -105,-205, -115, -215, -25, -125, -225))) %>% ## -53 if delayed_reward == T and -51 if immediate_reward == T
-             # slice(1) %>% 
-             # select(timefromstart)
              mutate(
                collect = 
                  case_when(
@@ -402,11 +395,7 @@ lapply(discounting_df_expanded %>%
            return(x)
          }) %>% rbindlist() %>% 
   group_by(filename) %>% 
-  dplyr::summarize(percent_reward_collected = sum(collect, na.rm = T)/length(collect) * 100)
-# %>% 
-  # dplyr::group_by(filename, subject, date, time) %>% 
-  # dplyr::summarize(percent_reward_collected = sum(collect)/length(collect) * 100) 
-slice(1) %>% ungroup() ## remove -125, -225
+  dplyr::summarize(percent_reward_collected = sum(collect, na.rm = T)/length(collect) * 100) %>% ungroup() ## remove -125, -225
 
 
 
@@ -417,13 +406,15 @@ discountingvalidtraits <- list("discountingevents" = discountingevents,
                                "timeout_duration" = timeout_duration,
                                "collection_time" = collection_time,
                                "events_imm" = events_imm,
-                               "events_del" = events_del
+                               "events_del" = events_del,
+                               "rewards_collected" = rewards_collected
                                ) %>% do.call(cbind, .) 
 discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] ## remove duplicated columns, like subject, filename, etc
 names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
 discountingvalidtraits %<>% 
-  mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del)
+  mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del) 
 
+discountingvalidtraits <- discountingvalidtraits[, c( setdiff(names(discountingvalidtraits), c("events_before_collect_tot", "percent_reward_collected")), c("events_before_collect_tot", "percent_reward_collected"))] ## more flexible way of reordering the columns without using references
 
 ## XX figure out how to remove the rep variable
 ## 3 traits that we should be cautious about rn are: events_before_center_fi and fd; and avg_collection_time_free 
