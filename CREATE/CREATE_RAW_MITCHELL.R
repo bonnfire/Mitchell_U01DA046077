@@ -378,34 +378,34 @@ events_del <- lapply(discounting_df_expanded %>%
 # rewards_collected <- 
   
 lapply(discounting_df_expanded %>% 
-                              subset(filename == "./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% 
-                              select(-event_order) %>% 
-                              subset(codes %in% c(-51, -53, 
-                                                  -5,-105, -205, -15, -115, -215, -25, -125, -225,
-                                                  -7, -107, -207, -17, -117, -217, -27, -127, -227)) %>% 
-                              split(., cumsum(1:nrow(.) %in% which(.$codes %in% c(-51, -53)))), function(x){
-                                x <- x %>% 
-                                  dplyr::filter((x$codes[1] == -53 & codes %in% c( -53, -7, -107, -207, -17, -117, -217, -27, -127, -227)) | 
-                                                 (x$codes[1] == -51 & codes %in% c( -51, -5, -15, -105,-205, -115, -215, -25, -125, -225))) %>% ## -53 if delayed_reward == T and -51 if immediate_reward == T
-                                  slice(1) %>% 
-                                  select(timefromstart)
-                                  # mutate(
-                                  #   collect = ifelse(x$codes[1] == -53 & length(timefromstart[codes %in% c( -7, -107, -207, -17, -117, -217, -27, -127, -227)] > 1) |
-                                  #                      x$codes[1] == -51 & length(timefromstart[codes %in% c( -5, -15, -105,-205, -115, -215, -25, -125, -225)] > 1), 1, 0)) %>%  
-                                  # slice(1) %>%
-                                  # dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
-                                return(x)
-                              }) %>% rbindlist() %>% 
+         subset(filename == "./Ship1_Latin-square/2019-02-07_09h42m_Subject 46259.txt") %>% 
+         select(-event_order) %>% 
+         subset(codes %in% c(-51, -53, 
+                             -5,-105, -205, -15, -115, -215, -25, -125, -225,
+                             -7, -107, -207, -17, -117, -217, -27, -127, -227)) %>% 
+         split(., cumsum(1:nrow(.) %in% which(.$codes %in% c(-51, -53)))), function(x){
+           x <- x %>% 
+             # dplyr::filter((x$codes[1] == -53 & codes %in% c( -53, -7, -107, -207, -17, -117, -217, -27, -127, -227)) | 
+             #                (x$codes[1] == -51 & codes %in% c( -51, -5, -15, -105,-205, -115, -215, -25, -125, -225))) %>% ## -53 if delayed_reward == T and -51 if immediate_reward == T
+             # slice(1) %>% 
+             # select(timefromstart)
+             mutate(
+               collect = 
+                 case_when(
+                   x$codes[1] == -53 & any(grepl("7$", x$codes)) | x$codes[1] == -51 & any(grepl("5$", x$codes)) ~ 1,
+                   # TRUE ~ 0
+                   x$codes[1] == -53 & nrow(subset(x, codes == "-53")) > 1 | x$codes[1] == -51 & nrow(subset(x, codes == "-51")) > 1 ~ 0
+                 )) %>%
+             slice(1) %>%
+             dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
+           return(x)
+         }) %>% rbindlist() %>% 
   group_by(filename) %>% 
-  dplyr::summarize(percent_reward_collected = sum(timefromstart)/length(timefromstart) * 100)
+  dplyr::summarize(percent_reward_collected = sum(collect)/length(collect) * 100)
 # %>% 
   # dplyr::group_by(filename, subject, date, time) %>% 
   # dplyr::summarize(percent_reward_collected = sum(collect)/length(collect) * 100) 
 slice(1) %>% ungroup() ## remove -125, -225
-
-
-
-
 
 
 
