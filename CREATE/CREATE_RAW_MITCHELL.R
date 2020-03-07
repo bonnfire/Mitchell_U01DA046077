@@ -394,14 +394,15 @@ lapply(discounting_df_expanded %>%
                  case_when(
                    x$codes[1] == -53 & any(grepl("7$", x$codes)) | x$codes[1] == -51 & any(grepl("5$", x$codes)) ~ 1,
                    # TRUE ~ 0
-                   x$codes[1] == -53 & nrow(subset(x, codes == "-53")) > 1 | x$codes[1] == -51 & nrow(subset(x, codes == "-51")) > 1 ~ 0
+                   x$codes[1] == -53 & length(x$codes[which(x$codes == "-53")])>= 1 | x$codes[1] == -51 & length(x$codes[which(x$codes == "-51")])>= 1 ~ 0
                  )) %>%
              slice(1) %>%
+             subset(!is.na(collect)) %>% 
              dplyr::select(-one_of(c("codes", "timefromstart", "reward","adjustingamt")))
            return(x)
          }) %>% rbindlist() %>% 
   group_by(filename) %>% 
-  dplyr::summarize(percent_reward_collected = sum(collect)/length(collect) * 100)
+  dplyr::summarize(percent_reward_collected = sum(collect, na.rm = T)/length(collect) * 100)
 # %>% 
   # dplyr::group_by(filename, subject, date, time) %>% 
   # dplyr::summarize(percent_reward_collected = sum(collect)/length(collect) * 100) 
