@@ -38,17 +38,16 @@ read_excel_values_discounting <- function(xlname){
   names(df) <- path_sheetnames
   return(df)
 }
-mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelOutput.xlsm") %>% rbindlist() %>% 
+mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelFiles2.xlsm") %>% rbindlist() %>% 
   mutate(time = sub(".*_(\\d+h\\d+m)_.*", "\\1", V1) %>% strptime(format = "%Hh%Mm") %>% format("%H:%M")) %>% 
   select(V1, V2, V3, time, everything())
 
+names(mitchell_discounting_excel_original) <- names(discountingvalidtraits)
 
-
-names(mitchell_discounting_excel_original) <- names(discountingvalidtraits)[names(discountingvalidtraits) != "time"] %>% 
-  append(., "percent_reward_collected")
-  mutate_at(vars(one_of), as.character) %>% 
-  mutate_at(, as.numeric) %>%
-  mutate_at( , lubridate::ymd)
+mitchell_discounting_excel <- mitchell_discounting_excel_original %>% 
+  mutate_all(as.character) %>% 
+  mutate_at(vars(-one_of("filename", "subject", "date", "time")), as.numeric) %>%
+  mutate_at(vars(one_of("date")), lubridate::ymd)
   
   
   

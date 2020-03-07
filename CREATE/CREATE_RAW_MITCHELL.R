@@ -412,8 +412,8 @@ discountingvalidtraits <- list("discountingevents" = discountingevents,
 discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] ## remove duplicated columns, like subject, filename, etc
 names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
 discountingvalidtraits %<>% 
-  mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del) 
-
+  mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del) %<>% 
+  mutate(date = lubridate::ymd(as.character(date)))
 discountingvalidtraits <- discountingvalidtraits[, c( setdiff(names(discountingvalidtraits), c("events_before_collect_tot", "percent_reward_collected")), c("events_before_collect_tot", "percent_reward_collected"))] ## more flexible way of reordering the columns without using references
 
 ## XX figure out how to remove the rep variable
