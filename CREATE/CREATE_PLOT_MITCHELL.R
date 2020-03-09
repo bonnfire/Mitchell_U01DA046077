@@ -15,7 +15,7 @@ discountingvalidtraits_graph <- discountingvalidtraits %>%
   left_join(metadata, by = c("cohort", "rfid")) %>% 
   mutate(experimentage = round(as.numeric(date - lubridate::ymd(as.character(dob)))), 0) %>% 
   select(cohort, rfid, everything()) %>% 
-  select(-c(filename, dob, rep, `0`), filename)
+  select(-c(filename, dob), filename)
 discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
@@ -206,6 +206,62 @@ df2 = ddply(discountingvalidtraits_graph, .(avg_events_before_collect_imm, event
   d[(d$y - limits[1])*(limits[2] - d$y) > 0,]
 })
 
+
+
+
+#### CHECKING THE WITHIN SUBJECT RANDOMNESS 
+discountingvalidtraits_graph %>% 
+  ggplot() + 
+  geom_path(aes(x = rep, y = avg_rxn_time_free, color = subject, group = delay)) + 
+  facet_grid(~ cohort) + 
+  theme(legend.title = element_blank(), legend.position = "none")
+
+  
+
+
+
+
+
+
+
+pdf("mitchell_discounting_within.pdf", onefile = T)
+for (i in seq_along(discountingtraits_extract$var_abv)){
+  
+  
+  plot_by_sex <- discountingvalidtraits_graph %>%
+    dplyr::filter(!is.na(delay)) %>% 
+    ggplot(aes(x = rep, color = subject, group = delay)) +
+    geom_path(aes_string(y = discountingtraits_extract$var_abv[i])) +
+    facet_grid(~ cohort) +
+    labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
+                                          "_Discounting_U01_Mitchell", "\n", 
+                                          "Assess Within Subject Variability"), width = 50),
+         x = "Rep",
+         y = discountingtraits_extract$var_graph[i]) +  # scale_fill_discrete(name = "New Legend Title")
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  print(plot_by_sex)
+  
+}
+dev.off()
+ggsave(filename="mitchell_discounting_within.pdf", plot=for (i in seq_along(discountingtraits_extract$var_abv)){
+  
+  
+  plot_by_sex <- discountingvalidtraits_graph %>%
+    dplyr::filter(!is.na(delay)) %>% 
+    ggplot(aes(x = rep, color = subject, group = delay)) +
+    geom_path(aes_string(y = discountingtraits_extract$var_abv[i])) +
+    facet_grid(~ cohort) +
+    labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
+                                          "_Discounting_U01_Mitchell", "\n", 
+                                          "Assess Within Subject Variability"), width = 50),
+         x = "Rep",
+         y = discountingtraits_extract$var_graph[i]) +  # scale_fill_discrete(name = "New Legend Title")
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  print(plot_by_sex)
+  
+}, width=8, height=10, units="in")
 
 
 

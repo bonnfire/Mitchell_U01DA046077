@@ -32,7 +32,7 @@ latinsquare_discount_df <- data.frame(delay = discount_latinsquare_order,
 
 
 # create latinsquare df for shipments 1 and 2 to account for missing files from readme files
-ship1_2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 99), ] 
+ship1_2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 99), ] ## 99 is manually extracted from subject arrange and greps
 fix_46260 <- latinsquare_discount_df %>% dplyr::filter(!(delay == 4 & rep == 2),!(delay == 2 & rep == 1)) %>% 
   add_row(delay = 4, rep = 2, .before = 3) # subject 100 in order
 ship1_2_bind <- rbind(ship1_2_bind, fix_46260)
