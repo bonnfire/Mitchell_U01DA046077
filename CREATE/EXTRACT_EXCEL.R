@@ -16,6 +16,7 @@ metadata <- lapply(metadata, function(x){
   x <- x %>% clean_names %>% 
     rename("rfid" = "transponder_id",
            "subject" = "last_5") %>% 
+    mutate(box_color = toupper(box_color)) %>% 
     select(one_of("rfid", "subject", "box_color", "computer", "operant_box", "assigned_lever"))
   names(x) <- gsub("_", "", names(x))
   return(x)
