@@ -216,8 +216,8 @@ discountingvalidtraits_graph %>%
   facet_grid(~ cohort) + 
   theme(legend.title = element_blank(), legend.position = "none")
 
-  
-
+my.rmc <- rmcorr::rmcorr(participant = subject, measure1 = delay, measure2 = events_during_to, dataset = discountingvalidtraits_graph)
+plot(my.rmc, overall = TRUE, palette = pal, overall.col =
 
 
 
