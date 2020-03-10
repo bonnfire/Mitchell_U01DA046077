@@ -211,13 +211,29 @@ df2 = ddply(discountingvalidtraits_graph, .(avg_events_before_collect_imm, event
 
 #### CHECKING THE WITHIN SUBJECT RANDOMNESS 
 discountingvalidtraits_graph %>% 
+  subset(!is.na(cohort)&!is.na(delay)) %>% 
   ggplot() + 
-  geom_path(aes(x = rep, y = avg_rxn_time_free, color = subject, group = delay)) + 
-  facet_grid(~ cohort) + 
-  theme(legend.title = element_blank(), legend.position = "none")
+  geom_path(aes(x = rep, y = avg_rxn_time_free, color = subject)) + 
+  facet_grid(rows = vars(cohort), cols = vars(delay)) + 
+  theme(legend.title = element_blank(), legend.position = "none",
+        text = element_text(size=20)) + 
+  labs(title = "Average reaction time (free) trials for each subject")
+
+
+
+discountingvalidtraits_graph %>% 
+  subset(!is.na(cohort) | !is.na(delay)) %>% 
+  group_by(cohort, rfid, sex, subject, delay) %>% 
+  summarize(subject = subject, 
+            delay = delay, 
+            avg_rxn_time_free_sd = sd(avg_rxn_time_free, na.rm = T))
+
 
 my.rmc <- rmcorr::rmcorr(participant = subject, measure1 = delay, measure2 = events_during_to, dataset = discountingvalidtraits_graph)
-plot(my.rmc, overall = TRUE, palette = pal, overall.col =
+library(RColorBrewer)
+blueset <- brewer.pal(8, 'Blues')
+pal <- colorRampPalette(blueset)
+plot(my.rmc, overall = TRUE, palette = pal, overall.col = 'black')
 
 
 
@@ -227,42 +243,22 @@ plot(my.rmc, overall = TRUE, palette = pal, overall.col =
 pdf("mitchell_discounting_within.pdf", onefile = T)
 for (i in seq_along(discountingtraits_extract$var_abv)){
   
-  
-  plot_by_sex <- discountingvalidtraits_graph %>%
-    dplyr::filter(!is.na(delay)) %>% 
-    ggplot(aes(x = rep, color = subject, group = delay)) +
-    geom_path(aes_string(y = discountingtraits_extract$var_abv[i])) +
-    facet_grid(~ cohort) +
+  plot_by_sex <- discountingvalidtraits_graph %>% 
+    subset(!is.na(cohort)&!is.na(delay)) %>% 
+    ggplot(aes(x = rep, color = subject)) + 
+    geom_path(aes_string(y = discountingtraits_extract$var_abv[i])) + 
+    facet_grid(rows = vars(cohort), cols = vars(delay)) + 
+    theme(legend.title = element_blank(), legend.position = "none",
+          text = element_text(size=20)) + 
     labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
                                           "_Discounting_U01_Mitchell", "\n", 
                                           "Assess Within Subject Variability"), width = 50),
          x = "Rep",
-         y = discountingtraits_extract$var_graph[i]) +  # scale_fill_discrete(name = "New Legend Title")
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+         y = discountingtraits_extract$var_graph[i])
   print(plot_by_sex)
   
 }
 dev.off()
-ggsave(filename="mitchell_discounting_within.pdf", plot=for (i in seq_along(discountingtraits_extract$var_abv)){
-  
-  
-  plot_by_sex <- discountingvalidtraits_graph %>%
-    dplyr::filter(!is.na(delay)) %>% 
-    ggplot(aes(x = rep, color = subject, group = delay)) +
-    geom_path(aes_string(y = discountingtraits_extract$var_abv[i])) +
-    facet_grid(~ cohort) +
-    labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
-                                          "_Discounting_U01_Mitchell", "\n", 
-                                          "Assess Within Subject Variability"), width = 50),
-         x = "Rep",
-         y = discountingtraits_extract$var_graph[i]) +  # scale_fill_discrete(name = "New Legend Title")
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  print(plot_by_sex)
-  
-}, width=8, height=10, units="in")
-
 
 
 
