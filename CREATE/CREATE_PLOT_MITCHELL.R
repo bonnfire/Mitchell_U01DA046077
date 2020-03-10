@@ -220,13 +220,22 @@ discountingvalidtraits_graph %>%
   labs(title = "Average reaction time (free) trials for each subject")
 
 
+## calculate summary stats for all trials for each delay
+discountingvalidtraits_graph_summary <- discountingvalidtraits_graph %>% 
+  subset(!is.na(cohort)&!is.na(delay)) %>% 
+  group_by(cohort, subject, delay) %>% 
+  summarise_at(.vars = discountingtraits_extract$var_abv,
+               .funs = c(mean="mean", min = "min", max = "max", sd = "sd"), na.rm = T) 
 
-discountingvalidtraits_graph %>% 
-  subset(!is.na(cohort) | !is.na(delay)) %>% 
-  group_by(cohort, rfid, sex, subject, delay) %>% 
-  summarize(subject = subject, 
-            delay = delay, 
-            avg_rxn_time_free_sd = sd(avg_rxn_time_free, na.rm = T))
+# %>% 
+#   ggplot(aes(x = rep, y = avg_rxn_time_free_mean)) + 
+#   geom_path(stat = "identity") + 
+#   geom_errorbar(aes(x = rep, ymin= avg_rxn_time_free_mean -avg_rxn_time_free_sd, ymax=avg_rxn_time_free_mean+avg_rxn_time_free_sd), na.rm = T, stat = "identity", width=0.4, colour="orange", alpha=0.9, size=1.3) +
+#   facet_grid(rows = vars(cohort), cols = vars(delay)) +
+#   theme(legend.title = element_blank(), legend.position = "none",
+#         text = element_text(size=20))
+
+
 
 
 my.rmc <- rmcorr::rmcorr(participant = subject, measure1 = delay, measure2 = events_during_to, dataset = discountingvalidtraits_graph)
