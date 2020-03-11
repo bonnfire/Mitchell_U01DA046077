@@ -225,8 +225,8 @@ discountingvalidtraits_graph_summary <- discountingvalidtraits_graph %>%
   subset(!is.na(cohort)&!is.na(delay)) %>% 
   group_by(cohort, subject, delay) %>% 
   summarise_at(.vars = discountingtraits_extract$var_abv,
-               .funs = c(mean="mean", min = "min", max = "max", sd = "sd"), na.rm = T) 
-
+               .funs = c(mean="mean", min = "min", max = "max", sd = "sd", var = "var"), na.rm = T) 
+discountingvalidtraits_graph_summary %>% select(cohort, subject, delay, matches("var"))
 # %>% 
 #   ggplot(aes(x = rep, y = avg_rxn_time_free_mean)) + 
 #   geom_path(stat = "identity") + 
@@ -247,8 +247,6 @@ plot(my.rmc, overall = TRUE, palette = pal, overall.col = 'black')
 
 
 
-
-
 pdf("mitchell_discounting_within.pdf", onefile = T)
 for (i in seq_along(discountingtraits_extract$var_abv)){
   
@@ -261,13 +259,59 @@ for (i in seq_along(discountingtraits_extract$var_abv)){
           text = element_text(size=20)) + 
     labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
                                           "_Discounting_U01_Mitchell", "\n", 
-                                          "Assess Within Subject Variability"), width = 50),
+                                          "Assess Within Subject Variability"), width = 30),
          x = "Rep",
          y = discountingtraits_extract$var_graph[i])
   print(plot_by_sex)
   
 }
 dev.off()
+
+
+## QCING THE AGE
+
+data %>%
+  group_by(id) %>%
+  arrange(date) %>%
+  mutate(diff = value - lag(value, default = first(value)))
+
+discountingvalidtraits_graph %>%
+  group_by(cohort, subject) %>%
+  mutate(exp_age_diff = experimentage - lag(experimentage, default = first(experimentage))) %>% 
+  select(cohort, subject, delay, exp_age_diff) %>% head(10)
+
+
+discountingvalidtraits_graph$exp_age_diff <- ave(discountingvalidtraits_graph$experimentage, discountingvalidtraits_graph$subject, FUN=function(x) c(0, diff(x)))
+
+
+
+discountingvalidtraits_graph %>% head(2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

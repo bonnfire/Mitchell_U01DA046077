@@ -505,6 +505,49 @@ rxn_time_subset_time %>%
 # The first and last patch changes of the test session were excluded 
 
 
+
+
+## INDIFFERENCE 
+### trying to find the indifference points? 
+# median adjusting amounts over trials 31-60 -> average to create composite value for each delay
+indifference <- discounting_df %>% distinct(file) %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                date = as.POSIXct(date)) %>% 
+  dplyr::arrange(subject, date) %>% cbind(., ship1_2_bind) %>% 
+  left_join(discounting_df, ., by = c("file" = "filename")) %>% 
+  subset(!is.na(adjustingamt)) %>% dplyr::group_by(file) %>% 
+  dplyr::mutate(trial = dplyr::row_number()) %>% 
+  subset(trial > 30) %>% group_by(file) %>% dplyr::mutate(indifference_point = median(adjustingamt)) %>% select(file, indifference_point, subject, delay, date, time) %>% distinct() %>% 
+  ungroup() %>% ################# pick up here to check if the delay is being assigned correctly
+  group_by(subject, delay) %>% 
+  summarize(composite_value = mean(indifference_point))
+
+
+
+indifference %>% 
+  ungroup() %>% 
+  mutate(delay = as.integer(delay), 
+         composite_value = as.integer(composite_value)) %>% 
+  slice(1:150) %>% 
+  ggplot() +
+  geom_path(aes(x = delay, y = composite_value)) +
+  facet_grid( ~subject) + 
+  labs(y = "Average of indifference points") + 
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 45, size = 10))
+
+### 
+
+
+
+
+
+
+
+
 #########################################
 ############ LOCOMOTOR ##################
 #########################################

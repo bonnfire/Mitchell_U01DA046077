@@ -16,7 +16,9 @@ discountingvalidtraits_rep <- cbind(discountingvalidtraits %>% arrange(subject, 
 discountingvalidtraits_rep 
 
 
-
+left_join(mitchell_discounting_excel, discountingvalidtraits) %>% 
+  geom_path(aes(x = rep, y = avg_rxn_time_free, color = subject)) + 
+  facet_grid(rows = vars(cohort), cols = vars(delay))
 ## check if dates are correct from macro? 
 
 
