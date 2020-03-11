@@ -539,11 +539,45 @@ indifference %>%
 # increases in the adjusting amount indicate choice of the delayed alternative while decreases suggest choice in adjusting alternative
 # variability between 0s delaysesssions is usually larger than variability bw sessions w particular delays
 
+pdf("mitchell_discounting_adjustingamounts.pdf", onefile = T)
+for(i in 1:5){
+  
+  g <- discounting_df %>% subset(!is.na(reward)) %>% 
+    dplyr::rename('filename' = 'file') %>% 
+    left_join(., delays, by = "filename") %>% 
+    dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2]) %>% 
+    subset(subject %in% c("46047", "46259", "46060", "45899", "46359")) %>% 
+    dplyr::group_by(filename) %>% 
+    dplyr::mutate(trial = dplyr::row_number()) %>% 
+    ungroup() %>% 
+    ggplot() +
+    geom_line(aes(x = trial, y = adjustingamt)) +
+    geom_point(aes(x = trial, y = adjustingamt), size = 0.2) +
+    ggforce::facet_grid_paginate(delay ~ subject, nrow = 6, ncol = 1, page = i)
+  print(g)
+  
+}
+dev.off()
+
 discounting_df %>% subset(!is.na(reward)) %>% 
-  subset(grepl("46067", file)) %>% 
   dplyr::rename('filename' = 'file') %>% 
   left_join(., delays, by = "filename") %>% 
-  subset(delay == 0) %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2]) %>% 
+  subset(subject %in% c("46047", "46259", "46060", "45899", "46359")) %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(trial = dplyr::row_number()) %>% 
+  ungroup() %>% 
+  ggplot() +
+  geom_line(aes(x = trial, y = adjustingamt)) + 
+  facet_wrap(subject ~ delay)
+
+
+
+
+
+discounting_df %>% subset(!is.na(reward)) %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  left_join(., delays, by = "filename") %>% 
   dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
                 date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
                 time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
