@@ -270,11 +270,6 @@ dev.off()
 
 ## QCING THE AGE
 
-data %>%
-  group_by(id) %>%
-  arrange(date) %>%
-  mutate(diff = value - lag(value, default = first(value)))
-
 discountingvalidtraits_graph %>%
   group_by(cohort, subject) %>%
   mutate(exp_age_diff = experimentage - lag(experimentage, default = first(experimentage))) %>% 
@@ -289,6 +284,7 @@ discountingvalidtraits_graph %>% head(2)
 
 
 
+## QCING THE DISTRIBUTION OF THE POINTS
 
 
 

@@ -18,7 +18,7 @@ library(lubridate)
 # Shipment2 Latin Square (From U01_Shipment2_LS_Data_Files_Overview.pdf)
 # Expectations: 110 subjects; provided 3960/3960 sessions for analysis
 
-## trying to get delay another way
+# extract DELAY from the files (two lines before the end time)
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting")
 
 extract_delays<- function(x){
@@ -57,9 +57,6 @@ eventchoices_full <- eventchoices %>%
                    "meaning" = paste0(.$meaning[2:11], "_fd"))) %>% 
   rbind(data.frame("key" = .$key[2:11] - 200, 
                    "meaning" = paste0(.$meaning[2:11], "_fi")))
-
-
-
 
 
 
@@ -532,6 +529,41 @@ indifference %>%
         axis.text.x = element_text(angle = 45, size = 10))
 
 ### 
+
+
+## looking at distribution of indifference
+
+## for each subject on each tral, the size of the reinforcer from the adjusting alternative (adjusting amount) 
+# is recorded, even when the delayed alternative is selected 
+# INDEX OF PREFERENCE 
+# increases in the adjusting amount indicate choice of the delayed alternative while decreases suggest choice in adjusting alternative
+# variability between 0s delaysesssions is usually larger than variability bw sessions w particular delays
+
+discounting_df %>% subset(!is.na(reward)) %>% 
+  subset(grepl("46067", file)) %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  left_join(., delays, by = "filename") %>% 
+  subset(delay == 0) %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                date = as.POSIXct(date)) %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(trial = dplyr::row_number()) %>% 
+  ungroup() %>% 
+  # slice(1:150) %>% 
+  ggplot() +
+  geom_line(aes(x = trial, y = adjustingamt)) +
+  geom_point(aes(x = trial, y = adjustingamt)) +
+  facet_grid( ~delay) 
+
+%>% 
+  s %>% group_by(file) %>% dplyr::mutate(indifference_point = median(adjustingamt)) %>% select(file, indifference_point, subject, delay, date, time) %>% distinct() %>% 
+  ungroup() %>% ################# pick up here to check if the delay is being assigned correctly
+  group_by(subject, delay) %>% 
+  summarize(composite_value = mean(indifference_point))
+
+
 
 
 
