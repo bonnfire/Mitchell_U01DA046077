@@ -18,32 +18,24 @@ library(lubridate)
 # Shipment2 Latin Square (From U01_Shipment2_LS_Data_Files_Overview.pdf)
 # Expectations: 110 subjects; provided 3960/3960 sessions for analysis
 
-# Each subject performed 6 iterations of each time delay 0s,2s, 4s, 8s, 16s, and 24sin the delay discounting task(89X36 sessions)
-discount_latinsquare_order <- c(4, 8, 2, 16, 0, 24,
-                                2, 4, 0, 8, 24, 16,
-                                8, 16, 4, 24, 2, 0,
-                                24, 0 ,16, 2, 8, 4,
-                                16, 24, 8, 0, 4, 2,
-                                0, 2, 24, 4, 16, 8)
-latinsquare_discount_df <- data.frame(delay = discount_latinsquare_order,
-                                      order = 1:length(discount_latinsquare_order)) %>% 
-  group_by(delay) %>% mutate(rep = row_number()) %>% arrange(as.numeric(order)) %>% select(-order) %>% 
-  ungroup() # creates a 36*2 dataframe that notes which rep each delay is 
+## trying to get delay another way
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting")
 
+extract_delays<- function(x){
+  delays <- fread(paste0("grep -a2 \"30000\" ", "'", x, "'", " | tail -n 1"))
+  delays$filename <- x
+  return(delays)
+  }
 
-# create latinsquare df for shipments 1 and 2 to account for missing files from readme files
-ship1_2_bind <- latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 99), ] ## 99 is manually extracted from subject arrange and greps
-fix_46260 <- latinsquare_discount_df %>% dplyr::filter(!(delay == 4 & rep == 2),!(delay == 2 & rep == 1)) %>% 
-  add_row(delay = 4, rep = 2, .before = 3) # subject 100 in order
-ship1_2_bind <- rbind(ship1_2_bind, fix_46260)
-ship1_2_bind <- rbind(ship1_2_bind, latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 5), ])
-fix_46266 <- latinsquare_discount_df %>% dplyr::filter(!(delay == 8 & rep == 2),!(delay == 2 & rep == 2)) %>% 
-  add_row(delay = 8, rep = 2, .before = 7) # subject 106 in order 
-ship1_2_bind <- rbind(ship1_2_bind, fix_46266)
-ship1_2_bind <- rbind(ship1_2_bind, latinsquare_discount_df[rep(seq_len(nrow(latinsquare_discount_df)), 93), ]) # total 199 subjects for 7162 files
+delays <- lapply(discounting_filenames, extract_delays) %>% rbindlist() %>% 
+  rename("delay" = "V1") %>% 
+  mutate(delay = delay/1000)
+delays <- delays %>% 
+  mutate(delay = replace(delay, delay == 0.001, 0))
 
-# include code to unzip the files and duplicate the files from the original directory to the new one
-#### XXXXXXXXXXXX
+delays %>% 
+  mutate(delay = replace(delay, delay == 0.001, 0)) %>% mutate(delay = as.character(delay)) %>% select(delay) %>% table()
+
 
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting") # use duplicate folder that contains the unzipped files
 discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T) # 7162 files (Shipments 1 and 2)
