@@ -540,13 +540,14 @@ indifference %>%
 # variability between 0s delaysesssions is usually larger than variability bw sessions w particular delays
 
 pdf("mitchell_discounting_adjustingamounts_free.pdf", onefile = T)
-for(i in 1:5){
+
+for(i in 1:(discounting_df %>% select(file) %>% dplyr::mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2]) %>% distinct(subject) %>% nrow)){
   
   g <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
     dplyr::rename('filename' = 'file') %>% 
     left_join(., delays, by = "filename") %>% 
     dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2]) %>% 
-    subset(subject %in% c("46047", "46259", "46060", "45899", "46359")) %>% 
+    # subset(subject %in% c("46047", "46259", "46060", "45899", "46359")) %>% 
     dplyr::group_by(filename) %>% 
     dplyr::mutate(trial = dplyr::row_number()) %>% 
     ungroup() %>% 
@@ -559,6 +560,8 @@ for(i in 1:5){
 }
 dev.off()
 
+
+# consider adding reps and making the median line really thick? 
 
 
 
