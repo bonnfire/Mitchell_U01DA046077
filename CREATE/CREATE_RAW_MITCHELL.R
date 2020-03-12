@@ -537,67 +537,41 @@ indifference %>%
 # is recorded, even when the delayed alternative is selected 
 # INDEX OF PREFERENCE 
 # increases in the adjusting amount indicate choice of the delayed alternative while decreases suggest choice in adjusting alternative
-# variability between 0s delaysesssions is usually larger than variability bw sessions w particular delays
+# variability between 0s delaysesssions is usually larger than variability bw sessions w particular delay
 
 pdf("mitchell_discounting_adjustingamounts_free.pdf", onefile = T)
-
-for(i in 1:(discounting_df %>% select(file) %>% dplyr::mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2]) %>% distinct(subject) %>% nrow)){
+# for(i in 1:(discounting_df %>% select(file) %>% dplyr::mutate(subject = str_match(file, "Subject (.*?)\\.txt")[,2]) %>% distinct(subject) %>% nrow)){
+for(i in 1:2){
   
+  
+  # consider adding reps and making the median line really thick? 
   g <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
     dplyr::rename('filename' = 'file') %>% 
     left_join(., delays, by = "filename") %>% 
-    dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2]) %>% 
-    # subset(subject %in% c("46047", "46259", "46060", "45899", "46359")) %>% 
+    dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                  date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                  time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                  date = as.POSIXct(date)) %>% 
+    dplyr::arrange(subject, date) %>%
+    # subset(subject %in% c("46047")) %>%
+    subset(subject %in% c("46047", "46259")) %>%
     dplyr::group_by(filename) %>% 
     dplyr::mutate(trial = dplyr::row_number()) %>% 
     ungroup() %>% 
+    group_by(subject, delay) %>%
+    mutate(rep = dense_rank(date) %>% as.character()) %>% 
+    ungroup() %>% 
     ggplot() +
-    geom_line(aes(x = trial, y = adjustingamt)) +
-    geom_point(aes(x = trial, y = adjustingamt), size = 0.2) +
-    ggforce::facet_grid_paginate(delay ~ subject, nrow = 6, ncol = 1, page = i)
+    geom_line(aes(x = trial, y = adjustingamt, color = rep)) +
+    geom_point(aes(x = trial, y = adjustingamt), size = 0.2) + 
+    stat_summary(aes(x = trial, y = adjustingamt), fun.y = "median", geom = "line", color = "black", size = 1.2) +
+    ggforce::facet_grid_paginate(delay ~ subject, nrow = 6, ncol = 1, page = i) +
+    labs(title = "Adjusting Amounts at All Free Trials (By Rep and Delay)")
+  
   print(g)
   
 }
 dev.off()
-
-
-# consider adding reps and making the median line really thick? 
-discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
-  dplyr::rename('filename' = 'file') %>% 
-  left_join(., delays, by = "filename") %>% 
-  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
-                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
-                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
-                date = as.POSIXct(date)) %>% 
-  dplyr::arrange(subject, date) %>%
-  subset(subject %in% c("46047")) %>%
-  # subset(subject %in% c("46047", "46259")) %>%
-  dplyr::group_by(filename) %>% 
-  dplyr::mutate(trial = dplyr::row_number()) %>% 
-  ungroup() %>% 
-  group_by(subject, delay) %>%
-  mutate(x_count=1:n()) %>% 
-  ungroup() %>% 
-  ggplot() +
-  geom_line(aes(x = trial, y = adjustingamt, group = )) +
-  geom_point(aes(x = trial, y = adjustingamt), size = 0.2)
-
-
-
-
-
-discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
-  dplyr::rename('filename' = 'file') %>% 
-  left_join(., delays, by = "filename") %>% 
-  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
-                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
-                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
-                date = as.POSIXct(date)) %>% 
-  dplyr::arrange(subject, date) %>% 
-  subset(subject %in% c("46047")) %>% 
-  select(delay, subject, date) %>% group_by(subject, delay) %>% mutate(x_count = dense_rank(date)) %>% distinct()
-
-
 
 
 #########################################
