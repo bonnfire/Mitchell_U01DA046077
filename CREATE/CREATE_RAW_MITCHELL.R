@@ -601,7 +601,9 @@ ship1_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -1
   dplyr::filter(trial > 30) %>% 
   group_by(filename, delay, subject, date, time, rep) %>% 
   summarize(median = median(adjustingamt),
-            numoftrials = max(trial))
+            numoftrials = max(trial)) %>% 
+  ungroup() %>% 
+  mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
   
 
 

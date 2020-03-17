@@ -87,7 +87,7 @@ mitchell_c01_xl <- u01.importxlsx.colname("AA_Processing_Macro_Shipment1.xlsm") 
       mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin", "filename")), as.character) %>% 
       mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A")))
     return(x)
-  })
+  }) %>% rbindlist()
 
 
 

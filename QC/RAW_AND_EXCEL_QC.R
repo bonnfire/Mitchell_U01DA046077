@@ -22,3 +22,11 @@ left_join(mitchell_discounting_excel, discountingvalidtraits) %>%
 ## check if dates are correct from macro? 
 
 
+mitchell01_rawvsxl <- left_join(ship1_raw_macro, mitchell_c01_xl, by = "filename") 
+names(mitchell01_rawvsxl) <- gsub("[.]x", "_raw", names(mitchell01_rawvsxl))
+names(mitchell01_rawvsxl) <- gsub("[.]y", "_xl", names(mitchell01_rawvsxl))
+mitchell01_rawvsxl %>% subset(delay_raw!=delay_xl) # none
+mitchell01_rawvsxl %>% 
+  mutate(median_raw = round(median_raw,0),
+         median_xl = as.numeric(median_xl) %>% round(0)) %>% subset(median_raw < median_xl - 1 | median_raw > median_xl + 1) ## only one off
+# (median_raw != median_xl) | 
