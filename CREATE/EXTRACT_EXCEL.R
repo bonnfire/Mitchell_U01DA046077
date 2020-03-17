@@ -25,7 +25,7 @@ metadata <- metadata %>% rbindlist(idcol = "cohort")
 
 
 
-### extract the data created from michelle's lab
+### extract the data created from mitchell's lab (katie)
 setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information/KG Python Script Materials")
 read_excel_values_discounting <- function(xlname){
   path_sheetnames <- excel_sheets(xlname)
@@ -50,5 +50,53 @@ mitchell_discounting_excel <- mitchell_discounting_excel_original %>%
   mutate_at(vars(-one_of("filename", "subject", "date", "time")), as.numeric) %>%
   mutate_at(vars(one_of("date")), lubridate::ymd)
   
-  
-  
+
+
+
+
+
+
+### extract the data created from mitchell's lab  (macros)
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information")
+u01.importxlsx.colname <- function(xlname){
+  path_sheetnames <- excel_sheets(xlname)
+  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, col_names = F)
+  names(df) <- path_sheetnames
+  return(df)
+}
+
+mitchell_c01_xl <- u01.importxlsx.colname("AA_Processing_Macro_Shipment1.xlsm") %>% 
+  lapply(., function(x){
+    x <- x[c(1, 76:84), ] %>% 
+      t() %>% 
+      as.data.frame() %>% 
+      separate(V1, into = c("delay", "rep"), sep = "\r\n") %>%
+      select(-matches("V(3|4|5)")) %>% 
+      rename("filename" = "V2",
+             "conversion" = "V6",
+             "median" = "V7",
+             "microliter" = "V8",
+             "numoftrials" = "V9",
+             "trials45_bin" = "V10") %>%
+      slice(-1) %>%
+      dplyr::filter(!is.na(filename)) %>% 
+      mutate(delay = as.numeric(str_extract_all(delay, "[0-9]+")), 
+             rep = as.numeric(str_extract_all(rep, "[0-9]+")), 
+             conversion = dplyr::first(conversion),
+             conversion = as.numeric(as.character(conversion))) %>%     
+      mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin", "filename")), as.character) %>% 
+      mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A")))
+    return(x)
+  })
+
+
+
+
+
+
+
+
+
+
+
+

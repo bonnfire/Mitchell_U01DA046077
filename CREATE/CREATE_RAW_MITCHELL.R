@@ -114,6 +114,13 @@ discounting_df_expanded <- discounting_df %>%
   dplyr::group_by(filename) %>% 
   dplyr::mutate(event_order = dplyr::row_number()) #ensure that events are in order
 
+
+## 
+# add the median codes 
+## 45751 (delay 16)
+# 45877
+## break down by cohort
+
 # extract squad (?) and box information
 
 
