@@ -367,7 +367,7 @@ for (i in seq_along(locomotortraits_extract)){
     geom_boxplot(aes_string(y = locomotortraits_extract[i]), outlier.size = 0.5) + 
     facet_grid( ~ cohort) + 
     labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
-                                          "_Discounting_U01_Mitchell", "\n"), width = 60),
+                                          "_Locomotor_U01_Mitchell", "\n"), width = 60),
          y = locomotortraits_extract[i])
   
   

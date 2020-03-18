@@ -22,6 +22,7 @@ left_join(mitchell_discounting_excel, discountingvalidtraits) %>%
 ## check if dates are correct from macro? 
 
 
+# joining xl TO raw
 mitchell01_rawvsxl <- left_join(ship1_raw_macro, mitchell_c01_xl, by = "filename") 
 names(mitchell01_rawvsxl) <- gsub("[.]x", "_raw", names(mitchell01_rawvsxl))
 names(mitchell01_rawvsxl) <- gsub("[.]y", "_xl", names(mitchell01_rawvsxl))
@@ -29,4 +30,32 @@ mitchell01_rawvsxl %>% subset(delay_raw!=delay_xl) # none
 mitchell01_rawvsxl %>% 
   mutate(median_raw = round(median_raw,0),
          median_xl = as.numeric(median_xl) %>% round(0)) %>% subset(median_raw < median_xl - 1 | median_raw > median_xl + 1) ## only one off
-# (median_raw != median_xl) | 
+# tried truncating both; but got 380 not matching
+mitchell01_rawvsxl %>% 
+  mutate(median_raw = round(median_raw, 0),
+         median_xl = round(as.numeric(median_xl), 0)) %>% 
+ggplot(aes(x = median_raw, y = median_xl)) + 
+  geom_point()
+
+
+
+# joining raw TO xl
+mitchell01_xlvsraw <- left_join(mitchell_c01_xl, ship1_raw_macro, by = "filename") 
+names(mitchell01_xlvsraw) <- gsub("[.]x", "_xl", names(mitchell01_xlvsraw))
+names(mitchell01_xlvsraw) <- gsub("[.]y", "_raw", names(mitchell01_xlvsraw))
+mitchell01_xlvsraw %>% 
+  mutate(median_raw = round(median_raw, 0),
+         median_xl = trunc(as.numeric(median_xl))) %>% subset(is.na(median_raw)&!is.na(median_xl)) %>% dim ## but diff DADs
+mitchell01_xlvsraw %>% 
+  mutate(median_raw = round(median_raw, 0),
+         median_xl = trunc(as.numeric(median_xl))) %>% 
+  subset(median_raw != median_xl)
+mitchell01_xlvsraw %>% 
+  mutate(median_raw = round(median_raw, 0),
+         median_xl = trunc(as.numeric(median_xl))) %>% 
+  ggplot(aes(x = median_raw, y = median_xl)) + 
+  geom_point()
+
+
+
+

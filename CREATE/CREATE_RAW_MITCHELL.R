@@ -69,10 +69,9 @@ eventchoices_full <- eventchoices %>%
 readdiscounting <- function(x){
   
 
-  discounting <- fread(paste0("sed -n /-100/,/30000/p ", "'", x, "'"))
-  if(discounting[nrow(discounting),] == 30000){
-    discounting <- discounting[-nrow(discounting),]
-  }  # 1/10 "The session should end at the 360000-ish mark so no problem having things in the 300000s" - Suzanne Mitchell
+  discounting <- fread(paste0("sed -n /-100/,/^1$\'\\r\'/p ", "'", x, "'"))
+  end <- which(discounting$V1 == 1)
+  discounting <- discounting[-c((end-1):nrow(discounting)),] # 1/10 "The session should end at the 360000-ish mark so no problem having things in the 300000s" - Suzanne Mitchell
   indices <- which(discounting$V1 < 0)
   discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
   
@@ -100,6 +99,18 @@ readdiscounting <- function(x){
   return(discounting_split_newcols)
 
 }
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting/Ship1_Latin-square")
+trouble_files <- mitchell01_xlvsraw %>% mutate(median_raw = round(median_raw, 0), median_xl = trunc(as.numeric(median_xl))) %>% subset(median_raw != median_xl & numoftrials_raw!=numoftrials_xl) %>% distinct(filename) %>% unlist() %>% as.character()
+discounting_df_troubleshoot <- lapply(trouble_files, readdiscounting) %>% rbindlist(fill = T)
+discounting_df_troubleshoot <- discounting_df_troubleshoot %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                date = as.POSIXct(date)) %>% 
+  dplyr::arrange(subject, date) %>% 
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(event_order = dplyr::row_number()) %>% ungroup() #ensure that events are in order 
 
 discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
 # summary looks good, no positive numbers in codes and almost all positive timestamps (only one na in file == "./Ship1_Latin-square/2019-03-22_15h05m_Subject 45883.txt")
@@ -596,8 +607,12 @@ ship1_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -1
   ungroup() %>% 
   group_by(subject, delay) %>%
   mutate(rep = dense_rank(date) %>% as.character()) %>% 
-  ungroup() %>% subset(grepl("Ship1", filename)) %>% group_by(filename) %>% dplyr::filter(max(trial) > 45) %>% 
   ungroup() %>% 
+  subset(grepl("Ship1", filename)) %>%
+  # group_by(filename) %>% 
+  # dplyr::filter(max(trial) > 45) %>% 
+  # ungroup() %>% 
+  mutate(adjustingamt = trunc(adjustingamt * 10/10)) %>% # truncate after the first DAD as macro does
   dplyr::filter(trial > 30) %>% 
   group_by(filename, delay, subject, date, time, rep) %>% 
   summarize(median = median(adjustingamt),
@@ -606,7 +621,33 @@ ship1_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -1
   mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
   
 
-
+ship1_raw_macro_troubleshoot <- discounting_df_troubleshoot %>% 
+  subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  left_join(., delays, by = "filename") %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                date = as.POSIXct(date)) %>% 
+  dplyr::arrange(subject, date) %>%
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(trial = dplyr::row_number()) %>% 
+  ungroup() %>% 
+  group_by(subject, delay) %>%
+  mutate(rep = dense_rank(date) %>% as.character()) %>% 
+  ungroup() %>% 
+  # subset(grepl("Ship1", filename)) %>%
+  # group_by(filename) %>% 
+  # dplyr::filter(max(trial) > 45) %>% 
+  # ungroup() %>% 
+  mutate(adjustingamt = trunc(adjustingamt * 10/10)) %>% # truncate after the first DAD as macro does
+  dplyr::filter(trial > 30) %>% 
+  group_by(filename, delay, subject, date, time, rep) %>% 
+  summarize(median = median(adjustingamt),
+            numoftrials = max(trial)) %>% 
+  ungroup() 
+# %>% 
+  # mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
 
 
 #########################################
