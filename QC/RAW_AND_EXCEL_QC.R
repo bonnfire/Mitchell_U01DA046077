@@ -57,5 +57,19 @@ mitchell01_xlvsraw %>%
   geom_point()
 
 
-
+mitchell02_rawvsxl <- left_join(ship2_raw_macro, mitchell_macro_xl, by = "filename")
+names(mitchell02_rawvsxl) <- gsub("[.]x", "_raw", names(mitchell02_rawvsxl))
+names(mitchell02_rawvsxl) <- gsub("[.]y", "_xl", names(mitchell02_rawvsxl))
+mitchell02_rawvsxl %>% 
+  mutate(median_raw = round(median_raw, 0),
+         median_xl = trunc(as.numeric(median_xl))) %>% 
+  ggplot(aes(x = median_raw, y = median_xl)) + 
+  geom_point() + 
+  labs(title = paste0("Cohort 2 Excel vs Raw Comparison"),
+       y = "Excel Median", x = "Raw Median") + 
+  theme(axis.text.x = element_text(hjust = 1, size = 12),
+        axis.text.y = element_text(hjust = 1, size = 12)) 
+mitchell02_rawvsxl %>% 
+  mutate(median_raw = round(median_raw,0),
+         median_xl = as.numeric(median_xl) %>% round(0)) %>% subset(median_raw == median_xl - 1 | median_raw == median_xl + 1) ## only one off
 

@@ -100,7 +100,7 @@ readdiscounting <- function(x){
 
 }
 
-discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
+discounting_df_cohort2 <- lapply(discounting_filenames[3203:7162], readdiscounting) %>% rbindlist(fill = T) # 7162 files
 # summary looks good, no positive numbers in codes and almost all positive timestamps (only one na in file == "./Ship1_Latin-square/2019-03-22_15h05m_Subject 45883.txt")
 
 discounting_df_expanded <- discounting_df %>% 
@@ -636,6 +636,33 @@ ship1_raw_macro_troubleshoot <- discounting_df_troubleshoot %>%
   ungroup() 
 # %>% 
   # mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
+
+ship2_raw_macro <- discounting_df_cohort2 %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
+  dplyr::rename('filename' = 'file') %>% 
+  left_join(., delays, by = "filename") %>% 
+  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
+                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
+                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
+                date = as.POSIXct(date)) %>% 
+  dplyr::arrange(subject, date) %>%
+  # subset(subject %in% c("46047")) %>%
+  # subset(subject %in% c("46047", "46259")) %>%
+  dplyr::group_by(filename) %>% 
+  dplyr::mutate(trial = dplyr::row_number()) %>% 
+  ungroup() %>% 
+  group_by(subject, delay) %>%
+  mutate(rep = dense_rank(date) %>% as.character()) %>% 
+  ungroup() %>% 
+  # group_by(filename) %>% 
+  # dplyr::filter(max(trial) > 45) %>% 
+  # ungroup() %>% 
+  mutate(adjustingamt = trunc(adjustingamt * 10/10)) %>% # truncate after the first DAD as macro does
+  dplyr::filter(trial > 30) %>% 
+  group_by(filename, delay, subject, date, time, rep) %>% 
+  summarize(median = median(adjustingamt),
+            numoftrials = max(trial)) %>% 
+  ungroup() %>% 
+  mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
 
 
 #########################################
