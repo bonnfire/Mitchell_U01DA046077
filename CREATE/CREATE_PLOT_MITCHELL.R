@@ -289,8 +289,11 @@ discountingvalidtraits_graph %>% head(2)
 
 
 
+## find out why avg_collection_time_free is NA
+# avg_collection_time_free
+# ./Ship1_Latin-square/2019-03-12_10h42m_Subject 46052.txt
 
-
+## maybe why other ones are this way?
 
 
 
@@ -345,11 +348,15 @@ for (i in seq_along(locomotortraits_extract)){
   #   labs(title = paste0(toupper(discountingtraits_extract$var_graph[i]), "_Discounting_U01_Mitchell", "\n"), x = "Cohort", fill = "Cohort") +  # scale_fill_discrete(name = "New Legend Title")
   #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-  # plot_by_box <- ggplot(discountingvalidtraits_graph, aes(x = as.factor(box), group = as.factor(box))) +
-  #   geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
-  #   geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
-  #   labs(title = paste0(toupper(discountingtraits_extract$var_graph[i]), "_Discounting_U01_Mitchell", "\n"), x = "Box", fill = "Box") +  # scale_fill_discrete(name = "New Legend Title")
-  #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  plot_by_box <- locomotorvalidtraits_graph %>% 
+    subset(!is.na(time)) %>% 
+    ggplot(aes(x = time, color = cage)) +
+    geom_boxplot(aes_string(y = locomotortraits_extract[i]), outlier.size = 0.5) + 
+    facet_grid( ~ cohort) + 
+    labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
+                                          "_Locomotor_U01_Mitchell_By_Cohort and Cage", "\n"), width = 60),
+         y = locomotortraits_extract[i])
+  
   
   # plot_by_sex <- discountingvalidtraits_graph %>% 
   #   ggplot(aes(x = as.factor(sex), group = as.factor(sex))) +
@@ -367,13 +374,13 @@ for (i in seq_along(locomotortraits_extract)){
     geom_boxplot(aes_string(y = locomotortraits_extract[i]), outlier.size = 0.5) + 
     facet_grid( ~ cohort) + 
     labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
-                                          "_Locomotor_U01_Mitchell", "\n"), width = 60),
+                                          "_Locomotor_U01_Mitchell_By_Cohort and Sex", "\n"), width = 60),
          y = locomotortraits_extract[i])
   
   
   
   # print(plot_by_cohort)
-  # print(plot_by_box)
+  print(plot_by_box)
   # print(plot_by_sex)
   print(plot_by_cohort_sex)
   

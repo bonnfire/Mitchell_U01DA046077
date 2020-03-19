@@ -683,6 +683,11 @@ my.summary = function(x) list(mean = mean(x),
 locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
                      by = .(experiment, cage, rfid, batch, time), 
                      .SDcols = locomotors_vars]
+## note that batch is batch 1 for all, not the same as cohort
+# locomotorvalidtraits_graph %>% 
+#   mutate(batch = readr::parse_number(batch), 
+#          cohort = readr::parse_number(cohort)) %>% 
+#   subset(batch != cohort) %>% dim()
 
 ## how much raw data do we have for spleen/ceca data 
 mitchell_spleenceca_toprocess %>% left_join(., locomotor_avg, by = c("rfid" = "subject_id")) %>% subset(is.na(total_distance_cm.mean))
