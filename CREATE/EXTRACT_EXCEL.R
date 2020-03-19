@@ -58,47 +58,45 @@ mitchell_discounting_excel <- mitchell_discounting_excel_original %>%
 
 ### extract the data created from mitchell's lab  (macros)
 setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information")
-u01.importxlsx.colname <- function(xlname){
-  path_sheetnames <- excel_sheets(xlname)
-  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, col_names = F)
-  names(df) <- path_sheetnames
+mitchell_xl <- list.files(path = ".", pattern = "AA_Processing_Macro_Shipment\\d+?.xlsm")
+extract_mitchell_macro_xl <- function(x){
+  
+  u01.importxlsx.colname <- function(xlname){
+    path_sheetnames <- excel_sheets(xlname)
+    df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, col_names = F)
+    names(df) <- path_sheetnames
+    return(df)
+  }
+  
+  
+  df <- u01.importxlsx.colname(x) %>% 
+    lapply(., function(x){
+      x <- x[c(1, 76:84), ] %>% 
+        t() %>% 
+        as.data.frame() %>% 
+        separate(V1, into = c("delay", "rep"), sep = "\r\n") %>%
+        select(-matches("V(3|4|5)")) %>% 
+        rename("filename" = "V2",
+               "conversion" = "V6",
+               "median" = "V7",
+               "microliter" = "V8",
+               "numoftrials" = "V9",
+               "trials45_bin" = "V10") %>%
+        slice(-1) %>%
+        dplyr::filter(!is.na(filename)) %>% 
+        mutate(delay = as.numeric(str_extract_all(delay, "[0-9]+")), 
+               rep = as.numeric(str_extract_all(rep, "[0-9]+")), 
+               conversion = dplyr::first(conversion),
+               conversion = as.numeric(as.character(conversion))) %>%     
+        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin", "filename")), as.character) %>% 
+        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A"))) %>% 
+        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), as.numeric)
+      return(x)
+    }) %>% rbindlist(idcol = "tab") %>% 
+    dplyr::filter(grepl("Sub\\d+", tab)) %>% 
+    select(-tab)
   return(df)
-}
-
-mitchell_c01_xl <- u01.importxlsx.colname("AA_Processing_Macro_Shipment1.xlsm") %>% 
-  lapply(., function(x){
-    x <- x[c(1, 76:84), ] %>% 
-      t() %>% 
-      as.data.frame() %>% 
-      separate(V1, into = c("delay", "rep"), sep = "\r\n") %>%
-      select(-matches("V(3|4|5)")) %>% 
-      rename("filename" = "V2",
-             "conversion" = "V6",
-             "median" = "V7",
-             "microliter" = "V8",
-             "numoftrials" = "V9",
-             "trials45_bin" = "V10") %>%
-      slice(-1) %>%
-      dplyr::filter(!is.na(filename)) %>% 
-      mutate(delay = as.numeric(str_extract_all(delay, "[0-9]+")), 
-             rep = as.numeric(str_extract_all(rep, "[0-9]+")), 
-             conversion = dplyr::first(conversion),
-             conversion = as.numeric(as.character(conversion))) %>%     
-      mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin", "filename")), as.character) %>% 
-      mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A")))
-    return(x)
-  }) %>% rbindlist(idcol = "tab") %>% 
-  dplyr::filter(grepl("Sub\\d+", tab)) %>% 
-  select(-tab)
-
-
-
-
-
-
-
-
-
-
+} 
+mitchell_macro_xl <- lapply(mitchell_xl, extract_mitchell_macro_xl) %>% rbindlist() 
 
 
