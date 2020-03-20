@@ -100,6 +100,7 @@ readdiscounting <- function(x){
 
 }
 
+discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
 discounting_df_cohort2 <- lapply(discounting_filenames[3203:7162], readdiscounting) %>% rbindlist(fill = T) # 7162 files
 # summary looks good, no positive numbers in codes and almost all positive timestamps (only one na in file == "./Ship1_Latin-square/2019-03-22_15h05m_Subject 45883.txt")
 
@@ -580,7 +581,7 @@ for(i in 1:(discounting_df %>% select(file) %>% dplyr::mutate(subject = str_matc
 dev.off()
 
 ## recreating macros values 
-ship1_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
+mitchell_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
   dplyr::rename('filename' = 'file') %>% 
   left_join(., delays, by = "filename") %>% 
   dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
@@ -596,7 +597,7 @@ ship1_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11, -1
   group_by(subject, delay) %>%
   mutate(rep = dense_rank(date) %>% as.character()) %>% 
   ungroup() %>% 
-  subset(grepl("Ship1", filename)) %>%
+  # subset(grepl("Ship1", filename)) %>%
   # group_by(filename) %>% 
   # dplyr::filter(max(trial) > 45) %>% 
   # ungroup() %>% 
