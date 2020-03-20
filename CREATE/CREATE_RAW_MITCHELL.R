@@ -608,63 +608,17 @@ mitchell_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11,
             numoftrials = max(trial)) %>% 
   ungroup() %>% 
   mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
+
   
 
-ship1_raw_macro_troubleshoot <- discounting_df_troubleshoot %>% 
-  subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
-  dplyr::rename('filename' = 'file') %>% 
-  left_join(., delays, by = "filename") %>% 
-  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
-                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
-                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
-                date = as.POSIXct(date)) %>% 
-  dplyr::arrange(subject, date) %>%
-  dplyr::group_by(filename) %>% 
-  dplyr::mutate(trial = dplyr::row_number()) %>% 
-  ungroup() %>% 
-  group_by(subject, delay) %>%
-  mutate(rep = dense_rank(date) %>% as.character()) %>% 
-  ungroup() %>% 
-  # subset(grepl("Ship1", filename)) %>%
-  # group_by(filename) %>% 
-  # dplyr::filter(max(trial) > 45) %>% 
-  # ungroup() %>% 
-  mutate(adjustingamt = trunc(adjustingamt * 10/10)) %>% # truncate after the first DAD as macro does
-  dplyr::filter(trial > 30) %>% 
-  group_by(filename, delay, subject, date, time, rep) %>% 
-  summarize(median = median(adjustingamt),
-            numoftrials = max(trial)) %>% 
-  ungroup() 
-# %>% 
-  # mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
 
-ship2_raw_macro <- discounting_df_cohort2 %>% subset(!is.na(reward)&codes %in% c(-11, -13)) %>% 
-  dplyr::rename('filename' = 'file') %>% 
-  left_join(., delays, by = "filename") %>% 
-  dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
-                date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
-                time = gsub("h", ":", str_extract(filename, "\\d{2}h\\d{2}")),
-                date = as.POSIXct(date)) %>% 
-  dplyr::arrange(subject, date) %>%
-  # subset(subject %in% c("46047")) %>%
-  # subset(subject %in% c("46047", "46259")) %>%
-  dplyr::group_by(filename) %>% 
-  dplyr::mutate(trial = dplyr::row_number()) %>% 
-  ungroup() %>% 
-  group_by(subject, delay) %>%
-  mutate(rep = dense_rank(date) %>% as.character()) %>% 
-  ungroup() %>% 
-  # group_by(filename) %>% 
-  # dplyr::filter(max(trial) > 45) %>% 
-  # ungroup() %>% 
-  mutate(adjustingamt = trunc(adjustingamt * 10/10)) %>% # truncate after the first DAD as macro does
-  dplyr::filter(trial > 30) %>% 
-  group_by(filename, delay, subject, date, time, rep) %>% 
-  summarize(median = median(adjustingamt),
-            numoftrials = max(trial)) %>% 
-  ungroup() %>% 
-  mutate(filename = gsub("./Ship\\d_Latin-square/", "", filename))
-
+  
+  
+  
+  
+  
+  
+  
 
 #########################################
 ############ LOCOMOTOR ##################

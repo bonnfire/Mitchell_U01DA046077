@@ -294,8 +294,41 @@ discountingvalidtraits_graph %>% head(2)
 # ./Ship1_Latin-square/2019-03-12_10h42m_Subject 46052.txt
 
 ## maybe why other ones are this way?
+mitchell_raw_macro_expanded <- mitchell_raw_macro %>% 
+  mutate(subject = paste0("9330003200", subject)) %>% 
+  left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
+  left_join(metadata, by = c("cohort", "rfid"))
+
+mitchell_raw_macro_expanded %>% 
+  subset(!is.na(operantbox) & !is.na(delay)) %>%
+  mutate(delay = factor(delay, levels = unique(sort(delay)))) %>% 
+  ggplot(aes(x = delay, y = median, group = delay)) + 
+  # geom_boxplot(aes(x = delay, y = median, group = delay)) + 
+  geom_point(stat = 'summary', fun.y = function(x) median(x, na.rm = TRUE)) +
+  geom_path(aes(group = 1), stat = 'summary', fun.y = function(x) median(x, na.rm = TRUE)) +
+  facet_grid(~ operantbox) + 
+  labs(title = paste0("Delay Medians by Operant Box"),
+                                 y = "Median of Medians", x = "Delay") + 
+  theme(axis.text.x = element_text(hjust = 1, size = 12, angle = 40),
+        axis.text.y = element_text(hjust = 1, size = 12)) 
 
 
+
+
+
+mitchell_raw_macro_expanded %>% 
+  subset(!is.na(boxcolor) & !is.na(delay)) %>%
+  mutate(delay = factor(delay, levels = unique(sort(delay))),
+         boxcolor = toupper(boxcolor)) %>% 
+  ggplot(aes(x = delay, y = median, group = delay)) + 
+  # geom_boxplot(aes(x = delay, y = median, group = delay)) + 
+  geom_point(stat = 'summary', fun.y = function(x) median(x, na.rm = TRUE)) +
+  geom_path(aes(group = 1), stat = 'summary', fun.y = function(x) median(x, na.rm = TRUE)) +
+  facet_grid(~ computer) + 
+  labs(title = paste0("Delay Medians by Computer/Box Color"),
+       y = "Median of Medians", x = "Delay") + 
+  theme(axis.text.x = element_text(hjust = 1, size = 12, angle = 40),
+        axis.text.y = element_text(hjust = 1, size = 12)) 
 
 
 

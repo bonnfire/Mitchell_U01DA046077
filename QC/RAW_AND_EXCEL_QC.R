@@ -75,3 +75,6 @@ mitchell_xlvsraw %>%
         axis.text.y = element_text(hjust = 1, size = 12)) 
 
 
+## why are there missing data in the raw
+mitchell_xlvsraw %>% subset(!is.na(median_xl) & is.na(median_raw))
+
