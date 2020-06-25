@@ -28,6 +28,13 @@ mitchell_rawvsxl <- left_join(mitchell_raw_macro, mitchell_macro_xl, by = "filen
                                                                                               cohort = readr::parse_number(str_match(filename, "Ship\\d")) %>% as.character(),
                                                                                               filename = gsub("./Ship\\d_Latin-square/", "", filename)), ., by = "filename")
 
+
+
+left_join(mitchell_macro_xl, discounting_filenames %>% as.data.frame() %>% rename("filename" = ".") %>% mutate(filename = as.character(filename), 
+                                                                                                               cohort = readr::parse_number(str_match(filename, "Ship\\d")) %>% as.character(),
+                                                                                                               filename = gsub("./Ship\\d_Latin-square/", "", filename)), by = "filename") %>% select(cohort) %>% table()
+
+
 names(mitchell_rawvsxl) <- gsub("[.]x", "_raw", names(mitchell_rawvsxl))
 names(mitchell_rawvsxl) <- gsub("[.]y", "_xl", names(mitchell_rawvsxl))
 mitchell_rawvsxl %>% subset(delay_raw!=delay_xl) # none

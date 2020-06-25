@@ -3,7 +3,7 @@
 setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information")
 
 # extract the shipment files from this directory
-shipmentfiles <- list.files(path = ".", pattern = "Shipment\\d.xlsm")
+shipmentfiles <- list.files(path = ".", pattern = "Shipment\\d.xlsm") # 3 files 
 
 
 
@@ -71,26 +71,38 @@ extract_mitchell_macro_xl <- function(x){
   
   df <- u01.importxlsx.colname(x) %>% 
     lapply(., function(x){
-      x <- x[c(1, 76:84), ] %>% 
+      x <- x[c(1, 76:99), ] %>% 
         t() %>% 
         as.data.frame() %>% 
         separate(V1, into = c("delay", "rep"), sep = "\r\n") %>%
-        select(-matches("V(3|4|5)")) %>% 
+        select(-matches("V(3|4|5|1[1238]|2[34])")) %>% 
         rename("filename" = "V2",
                "conversion" = "V6",
                "median" = "V7",
                "microliter" = "V8",
                "numoftrials" = "V9",
-               "trials45_bin" = "V10") %>%
+               "trials45_bin" = "V10",
+               "rxntime_delay_avg" = "V14",
+               "choicerxntime_delay_avg" = "V15", 
+               "rxntime_imm_avg" = "V16", 
+               "choicerxntime_imm_avg" = "V17",
+               "choicerxntime_delay_count" = "V19", 
+               "choicerxntime_imm_count" = "V20", 
+               "choicerxntime_count_sum" = "V21",
+               "testsums_bin" = "V22",
+               "percent_choice" = "V25") %>%
         slice(-1) %>%
         dplyr::filter(!is.na(filename)) %>% 
+        mutate_all(as.character) %>% 
         mutate(delay = as.numeric(str_extract_all(delay, "[0-9]+")), 
                rep = as.numeric(str_extract_all(rep, "[0-9]+")), 
                conversion = dplyr::first(conversion),
                conversion = as.numeric(as.character(conversion))) %>%     
         mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin", "filename")), as.character) %>% 
-        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A"))) %>% 
-        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), as.numeric)
+        mutate_at(vars(c("median", "microliter", "numoftrials", "trials45_bin")), funs(na_if(., "A"))) %>%
+        mutate(testsums_bin = ifelse(testsums_bin == "yes", 1, 
+                                     ifelse(testsums_bin == "no", 0, NA))) %>% 
+        mutate_at(vars(-c("filename")), as.numeric)
       return(x)
     }) %>% rbindlist(idcol = "tab") %>% 
     dplyr::filter(grepl("Sub\\d+", tab)) %>% 
@@ -98,5 +110,5 @@ extract_mitchell_macro_xl <- function(x){
   return(df)
 } 
 mitchell_macro_xl <- lapply(mitchell_xl, extract_mitchell_macro_xl) %>% rbindlist() 
-
+mitchell_macro_xl %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(subject) %>% dim
 

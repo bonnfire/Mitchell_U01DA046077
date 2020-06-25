@@ -18,8 +18,24 @@ library(lubridate)
 # Shipment2 Latin Square (From U01_Shipment2_LS_Data_Files_Overview.pdf)
 # Expectations: 110 subjects; provided 3960/3960 sessions for analysis
 
-# extract DELAY from the files (two lines before the end time)
+
+# unzip files if you haven't already
+mitchell_uploaded_cohorts_disc <- data.frame(dirs = list.dirs("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Data-discounting", recursive = F)) %>%  # rec = F,don't include the path itself
+  mutate(cohort = str_extract(dirs, "Ship\\d"))
+  
+mitchell_unzipped_cohorts_disc <- data.frame(dirs = list.dirs("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting", recursive = F)) %>%  # rec = F,don't include the path itself
+  mutate(cohort = str_extract(dirs, "Ship\\d"))
+
+
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting")
+
+
+# extract DELAY from the files (two lines before the end time)
+
+
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting") # use duplicate folder that contains the unzipped files
+discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T) # 10749 files 
+# discounting_filenames %>% as.data.frame() %>% mutate(shipment = str_extract(`.`, "/Ship.*/")) %>% select(shipment) %>% table ## see which cohorts and how many each
 
 extract_delays<- function(x){
   delays <- fread(paste0("grep -a2 \"30000\" ", "'", x, "'", " | tail -n 1"))
@@ -36,9 +52,6 @@ delays <- delays %>%
 delays %>% 
   mutate(delay = replace(delay, delay == 0.001, 0)) %>% mutate(delay = as.character(delay)) %>% select(delay) %>% table()
 
-
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting") # use duplicate folder that contains the unzipped files
-discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T) # 7162 files (Shipments 1 and 2)
 
 ######################################################
 ############ USE FOR EVENT CODES (NEED TO VERIFY)
@@ -69,8 +82,8 @@ eventchoices_full <- eventchoices %>%
 readdiscounting <- function(x){
   
 
-  discounting <- fread(paste0("sed -n /-100/,/^1$\'\\r\'/p ", "'", x, "'"))
-  end <- which(discounting$V1 == 1)[1]
+  discounting <- fread(paste0("grep -Pzo \'(?s)-100.*\\r\\n.*30000\\r\\n1\' ", "'", x, "'"))
+  end <- which(discounting$V1 == 1) %>% tail(1)
   discounting <- discounting[-c((end-1):nrow(discounting)),] # 1/10 "The session should end at the 360000-ish mark so no problem having things in the 300000s" - Suzanne Mitchell
   indices <- which(discounting$V1 < 0)
   discounting_split <- split(discounting, cumsum(1:nrow(discounting) %in% indices))
@@ -101,10 +114,12 @@ readdiscounting <- function(x){
 }
 
 discounting_df <- lapply(discounting_filenames, readdiscounting) %>% rbindlist(fill = T) # 7162 files
-discounting_df_cohort2 <- lapply(discounting_filenames[3203:7162], readdiscounting) %>% rbindlist(fill = T) # 7162 files
-# summary looks good, no positive numbers in codes and almost all positive timestamps (only one na in file == "./Ship1_Latin-square/2019-03-22_15h05m_Subject 45883.txt")
+  # summary looks good, no positive numbers in codes and almost all positive timestamps (only one na in file == "./Ship1_Latin-square/2019-03-22_15h05m_Subject 45883.txt")
+# discounting_df %>% add_count(file) %>% distinct(file, n) %>% mutate(n = as.numeric(n)) %>% select(n) %>% summary() MIN SHOULD NOT BE LESS THAN 10
+
 
 discounting_df_expanded <- discounting_df %>% 
+  distinct(codes, timefromstart, file) %>% 
   dplyr::rename('filename' = 'file') %>% 
   dplyr::mutate(subject = str_match(filename, "Subject (.*?)\\.txt")[,2],
                 date = str_extract(filename, "\\d{4}-\\d{2}-\\d{2}"),
@@ -330,7 +345,7 @@ events_imm <- lapply(discounting_df_expanded %>% select(-event_order) %>%
   slice(1) %>% ungroup() ## remove -125, -225 ## remove -125, -225
 
 # EVENTS PRIOR TO DELAYED REWARD COLLECTION
-## getting events prior to immediate reward collection 
+## getting events prior to delayed reward collection 
 events_del <- lapply(discounting_df_expanded %>% 
                        select(-event_order) %>% 
                        subset(codes %in% c(-51, -53, -1, -3, -5, -6, 
@@ -404,12 +419,14 @@ discountingvalidtraits <- list("discountingevents" = discountingevents,
                                "events_imm" = events_imm,
                                "events_del" = events_del,
                                "rewards_collected" = rewards_collected
-                               ) %>% do.call(cbind, .) 
+                               ) %>% do.call(cbind, .)
 discountingvalidtraits <- discountingvalidtraits[!duplicated(as.list(discountingvalidtraits))] ## remove duplicated columns, like subject, filename, etc
 names(discountingvalidtraits) <- sub(".*[.]", "", names(discountingvalidtraits))
 discountingvalidtraits %<>% 
   mutate(events_before_collect_tot = avg_events_before_collect_imm + avg_events_before_collect_del) %<>% 
-  mutate(date = lubridate::ymd(as.character(date)))
+  mutate(date = lubridate::ymd(as.character(date))) %<>%  
+  left_join(., delays, by = "filename") %<>% 
+  select(filename, subject, date, time, delay, everything())
 discountingvalidtraits <- discountingvalidtraits[, c( setdiff(names(discountingvalidtraits), c("events_before_collect_tot", "percent_reward_collected")), c("events_before_collect_tot", "percent_reward_collected"))] ## more flexible way of reordering the columns without using references
 
 ## XX figure out how to remove the rep variable
@@ -627,7 +644,7 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA04
 dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
   separate(V1, into=c("experiment", "date"), sep = ":") %>% 
   mutate(cohort = sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0"),
-         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3])
+         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 203 observations from shipments 1-4
   
   
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
@@ -665,6 +682,10 @@ my.summary = function(x) list(mean = mean(x),
 locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
                      by = .(experiment, cage, rfid, batch, time), 
                      .SDcols = locomotors_vars]
+
+locomotor_avg <- locomotor_avg %>% 
+  mutate(experiment = replace(experiment, experiment == "U01-t2-gp13-B"&rfid == "933000320046763", "U01-t2-gp13")) 
+
 ## note that batch is batch 1 for all, not the same as cohort
 # locomotorvalidtraits_graph %>% 
 #   mutate(batch = readr::parse_number(batch), 

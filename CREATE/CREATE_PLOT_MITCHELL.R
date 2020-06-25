@@ -9,17 +9,24 @@
 ## gget wfu sex and birthdate; join with metadata 
 
 discountingvalidtraits_graph <- discountingvalidtraits %>% 
-  arrange(subject, date) %>% bind_cols(., ship1_2_bind) %>% 
   mutate(subject = paste0("9330003200", subject)) %>% 
   left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
   left_join(metadata, by = c("cohort", "rfid")) %>% 
-  mutate(experimentage = round(as.numeric(date - lubridate::ymd(as.character(dob)))), 0) %>% 
+  mutate(experimentage = round(as.numeric(date - lubridate::ymd(as.character(dob))), 0)) %>% 
+  mutate_at(vars(c("boxcolor", "computer", "assignedlever")), toupper) %>% 
   select(cohort, rfid, everything()) %>% 
   select(-c(filename, dob), filename)
 discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
-#   mutate(rfid = str_sub(rfid,-5,-1)) %>% 
+#   mutate(rfid = str_sub(rfid,-5,-1)) %>%
+
+
+## create names for otology db (XX PICK UP HERE TO ADD MACROS FROM DISCOUNTING AND LOCOMOTOR)
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/CREATE")
+set("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting")
+
+openxlsx::write.xlsx(unique(c(paste0("discounting_", names(discountingvalidtraits_graph)), paste0("discounting_", names(mitchell_macro_xl)))), "discounting_data_dictionary.xlsx")
 
 
 ## how much raw data do we have for spleen/ceca data 
@@ -354,7 +361,7 @@ mitchell_raw_macro_expanded %>%
 
 
 # locomotor_avg[, rfid := paste0("9330003200", rfid)] # already done to locomotor_raw
-locomotorvalidtraits_graph <- locomotor_avg[setDT(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")]), on = c("rfid")]
+locomotorvalidtraits_graph <- left_join(locomotor_avg, WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], by = "rfid")
 # locomotorvalidtraits_graph[, time := str_match(experiment, "U01-(.*?)-.*")[,2]]   
 # locomotortraits_extract <- data.frame(var_abv = grep(pattern = ".", names(locomotorvalidtraits_graph), perl = T, value = T) %>% as.character(),
 #                                         var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
@@ -373,6 +380,11 @@ locomotortraits_extract <- grep(pattern = "[.]", names(locomotorvalidtraits_grap
                                       
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
 pdf("mitchell_locomotor_raw.pdf", onefile = T)
+
+## investigation of special cases
+## cohort 4 (# from overview -- 47724, 47723, 47974 and 47530 were euthanized using CO2 chamber during study due to severe seizure phenotypes (onset post locomotor and during delay discounting sessions). Spleens, ceca, and tails collected.  Seizures were not witnessed by staff until weeks after the locomotor task had been completed; however, data may still not be viable due to complications associated with seizure phenotype.  )
+seizure_rats_c04 <- locomotorvalidtraits_graph %>% subset(grepl("47724|47723|47974|47530", rfid))
+
 for (i in seq_along(locomotortraits_extract)){
   
   # plot_by_cohort <- ggplot(discountingvalidtraits_graph, aes(x = cohort, group = cohort)) +
@@ -388,7 +400,10 @@ for (i in seq_along(locomotortraits_extract)){
     facet_grid( ~ cohort) + 
     labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
                                           "_Locomotor_U01_Mitchell_By_Cohort and Cage", "\n"), width = 60),
-         y = locomotortraits_extract[i])
+         y = locomotortraits_extract[i]) 
+  # +
+  #   geom_point(data = seizure_rats_c04, aes_string(x = "time", y =  locomotortraits_extract[i], color = "sex"), size = 2) +
+  #   geom_text(data = seizure_rats_c04 %>% mutate(rfid = gsub("9330003200", "", rfid)), aes_string(x = "time", y = locomotortraits_extract[i], label = "rfid"), vjust=1)
   
   
   # plot_by_sex <- discountingvalidtraits_graph %>% 
@@ -408,7 +423,10 @@ for (i in seq_along(locomotortraits_extract)){
     facet_grid( ~ cohort) + 
     labs(title = stringr::str_wrap(paste0(toupper(locomotortraits_extract[i]), 
                                           "_Locomotor_U01_Mitchell_By_Cohort and Sex", "\n"), width = 60),
-         y = locomotortraits_extract[i])
+         y = locomotortraits_extract[i]) +
+    geom_point(data = seizure_rats_c04, aes_string(x = "time", y =  locomotortraits_extract[i], color = "sex"), size = 2) +
+    geom_text(data = seizure_rats_c04 %>% mutate(rfid = gsub("9330003200", "", rfid)), aes_string(x = "time", y = locomotortraits_extract[i], label = "rfid"), vjust=1)
+  
   
   
   
@@ -421,3 +439,10 @@ for (i in seq_along(locomotortraits_extract)){
 dev.off()
 
 
+locomotorvalidtraits_graph %>% 
+  subset(!is.na(time)) %>% 
+  ggplot(aes(x = time, color = sex)) +
+  geom_boxplot(aes_string(y = locomotortraits_extract[i]), outlier.size = 0.5) + 
+  facet_grid( ~ cohort) + 
+  geom_point(data=seizure_rats_c04, aes(x = time, y = center_time_legacy_s.sum, color = sex), size = 2) +
+  geom_text(data = seizure_rats_c04 %>% mutate(rfid = gsub("9330003200", "", rfid)), aes(x = time, y = center_time_legacy_s.sum, label = rfid), vjust=1)
