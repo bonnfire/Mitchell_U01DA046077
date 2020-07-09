@@ -11,7 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 # setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
-# save(WFU_Mitchell_test_df, discounting_filenames, mitchell_shipments_spleen_df, mitchell_shipments_ceca_df, file = "Mitchell_data.RData")
+# mitchell_genotyping <- flowcell_df %>% left_join(., WFU_Mitchell_test_df[, c("cohort", "rfid")], by = "rfid") %>% subset(!is.na(cohort)) ## add source, consider reorganization
+# save(WFU_Mitchell_test_df, discounting_filenames, mitchell_shipments_spleen_df, mitchell_shipments_ceca_df, mitchell_genotyping, file = "Mitchell_data.RData")
 load(file = "Mitchell_data.RData")
 ```
 
@@ -63,8 +64,9 @@ mitchell_shipments_ceca_df %>%
 
 ### \# of animals in genotyping pipeline
 
-```{r cars}
-summary(cars)
+Cohort breakdown
+```{r genotyped, echo = F}
+mitchell_genotyping %>% distinct(rfid, cohort) %>% select(cohort) %>% table()
 ```
 
 ## Experiments by Cohorts
