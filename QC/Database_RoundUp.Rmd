@@ -1,0 +1,78 @@
+---
+title: "Database_RoundUp"
+author: "Palmer Lab: Bonnie Lin"
+output: pdf_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+# setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
+# save(WFU_Mitchell_test_df, discounting_filenames, mitchell_shipments_spleen_df, mitchell_shipments_ceca_df, file = "Mitchell_data.RData")
+load(file = "Mitchell_data.RData")
+```
+
+## R Markdown
+
+Broken down by cohort
+
+### \# of wake forest rfids 
+
+Cohort breakdown 
+```{r wfu-master, echo = F}
+WFU_Mitchell_test_df %>% select(cohort) %>% table()
+```
+
+### \# of subjects in raw data
+
+Cohort breakdown
+```{r raw-data, echo = F}
+data.frame(filename = discounting_filenames) %>% 
+  mutate(cohort = str_match(filename, "Ship\\d+")[,1],
+         subject = str_match(filename, "Subject (.*?)\\.txt")[,2]) %>% # extract from filename 
+  mutate(cohort = str_pad(parse_number(cohort), 2, "left", "0")) %>% # wrangle to uniform format 
+  distinct(subject, cohort) %>% 
+  select(cohort) %>% table()
+```
+
+### \# of subjects in excel data
+
+### \# of tissue shipments
+
+Spleen cohort breakdown
+```{r, echo = F}
+mitchell_shipments_spleen_df %>% 
+  mutate(cohort = str_match(sheet, "Shipment\\d+")[,1],
+         cohort = str_pad(parse_number(cohort), 2, "left", "0")) %>% 
+  distinct(rfid, cohort) %>% 
+  select(cohort) %>% table()
+```
+
+Ceca cohort breakdown
+```{r, echo = F}
+mitchell_shipments_ceca_df %>% 
+  mutate(cohort = str_match(sheet, "Shipment\\d+")[,1],
+         cohort = str_pad(parse_number(cohort), 2, "left", "0")) %>% 
+  distinct(rfid, cohort) %>% 
+  select(cohort) %>% table()
+```
+
+
+### \# of animals in genotyping pipeline
+
+```{r cars}
+summary(cars)
+```
+
+## Experiments by Cohorts
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
