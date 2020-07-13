@@ -1,5 +1,5 @@
 ---
-title: "Database_RoundUp"
+title: "Database Round Up"
 author: "Palmer Lab: Bonnie Lin"
 output: pdf_document
 date: "`r format(Sys.time(), '%d %B, %Y')`"
@@ -12,24 +12,26 @@ library(tidyverse)
 
 # setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
 # mitchell_genotyping <- flowcell_df %>% left_join(., WFU_Mitchell_test_df[, c("cohort", "rfid")], by = "rfid") %>% subset(!is.na(cohort)) ## add source, consider reorganization
-# save(WFU_Mitchell_test_df, discounting_filenames, mitchell_shipments_spleen_df, mitchell_shipments_ceca_df, mitchell_genotyping, file = "Mitchell_data.RData")
+# save(WFU_Mitchell_test_df, discounting_filenames, mitchell_shipments_spleen_df, mitchell_shipments_ceca_df, mitchell_genotyping, mitchell_macro_xl_df, file = "Mitchell_data.RData")
 load(file = "Mitchell_data.RData")
 ```
 
-## R Markdown
+## For Suzanne Mitchell
 
-Broken down by cohort
 
-### \# of wake forest rfids 
+Below you will find the number of records that I have for your experiments, broken down by cohorts.
 
-Cohort breakdown 
+
+### \# of IDs from Wake Forest shipment sheets
+
 ```{r wfu-master, echo = F}
 WFU_Mitchell_test_df %>% select(cohort) %>% table()
 ```
 
 ### \# of subjects in raw data
 
-Cohort breakdown
+These were extracted from the text files in *Suzanne_Mitchell_U01/Data-discounting*
+
 ```{r raw-data, echo = F}
 data.frame(filename = discounting_filenames) %>% 
   mutate(cohort = str_match(filename, "Ship\\d+")[,1],
@@ -41,9 +43,15 @@ data.frame(filename = discounting_filenames) %>%
 
 ### \# of subjects in excel data
 
-### \# of tissue shipments
+These were extracted from the macro sheets in *Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information*
 
-Spleen cohort breakdown
+```{r xl-data, echo = F}
+mitchell_macro_xl_df %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(cohort, subject) %>% select(cohort) %>% table()
+```
+
+### \# of IDs from tissue shipments
+
+Spleens
 ```{r, echo = F}
 mitchell_shipments_spleen_df %>% 
   mutate(cohort = str_match(sheet, "Shipment\\d+")[,1],
@@ -52,7 +60,7 @@ mitchell_shipments_spleen_df %>%
   select(cohort) %>% table()
 ```
 
-Ceca cohort breakdown
+Ceca
 ```{r, echo = F}
 mitchell_shipments_ceca_df %>% 
   mutate(cohort = str_match(sheet, "Shipment\\d+")[,1],
@@ -62,19 +70,10 @@ mitchell_shipments_ceca_df %>%
 ```
 
 
-### \# of animals in genotyping pipeline
+### \# of subjects in genotyping pipeline
 
-Cohort breakdown
+This is the number of animals we are currently genotyping. 
+
 ```{r genotyped, echo = F}
 mitchell_genotyping %>% distinct(rfid, cohort) %>% select(cohort) %>% table()
 ```
-
-## Experiments by Cohorts
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

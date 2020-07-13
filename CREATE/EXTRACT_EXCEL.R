@@ -109,6 +109,9 @@ extract_mitchell_macro_xl <- function(x){
     select(-tab)
   return(df)
 } 
-mitchell_macro_xl <- lapply(mitchell_xl, extract_mitchell_macro_xl) %>% rbindlist() 
-mitchell_macro_xl %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(subject) %>% dim
-
+mitchell_macro_xl <- lapply(mitchell_xl, extract_mitchell_macro_xl) 
+names(mitchell_macro_xl) <- mitchell_xl
+mitchell_macro_xl_df <- mitchell_macro_xl %>% 
+  rbindlist(idcol = "cohort") %>% 
+  mutate(cohort = str_extract(cohort, "Shipment\\d+") %>% parse_number() %>% str_pad(2, "left", "0"))
+mitchell_macro_xl_df %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(cohort, subject) %>% select(cohort) %>% table()
