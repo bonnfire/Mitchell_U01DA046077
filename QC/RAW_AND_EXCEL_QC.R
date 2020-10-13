@@ -59,23 +59,27 @@ locomotor_raw_fix_c01_05 <- bind_rows(c01_locomotor_df, c02_locomotor_df) %>%
 
 locomotor_gwas <- locomotor_raw_fix_c01_05 %>% 
   mutate(time = str_match(experiment, "U01-(.*?)-.*")[,2]) %>% # after manually fixing above, repopulate the column
-  select(cohort, rfid, time, group, total_distance_cm, rest_time_s, rest_episode_count, 
+  select(cohort, rfid, time, group, cage, total_distance_cm, rest_time_s, rest_episode_count, 
          movement_episode_count, vertical_activity_count, center_time_legacy_s, comment) %>% 
-  group_by(cohort, rfid, time, group, comment) %>% # after fixes, regroup
+  group_by(cohort, rfid, time, group, comment, cage) %>% # after fixes, regroup
   summarize_if(is.numeric, sum, na.rm = T) %>% 
   ungroup() %>% 
   pivot_wider(names_from = time, 
               values_from = c(total_distance_cm, rest_time_s, rest_episode_count, 
-                              movement_episode_count, vertical_activity_count, center_time_legacy_s))
+                              movement_episode_count, vertical_activity_count, center_time_legacy_s)) %>% 
+  mutate(cage = parse_number(cage))
 
+# join the metadata (box and age)
 locomotor_gwas_metadata <- locomotor_gwas %>% 
-  left_join(locomotor_metadata_c01_05 %>% select(rfid, locomotor_testing_cage, matches("day")), by = "rfid") %>% # add box and dates
+  left_join(locomotor_metadata_c01_05 %>% 
+              select(rfid, 
+                     # locomotor_testing_cage, # drop box for now, XX 10/13/2020 resolve these two locomotor_gwas_metadata %>% subset(cage != locomotor_testing_cage) %>% View() when they respond
+                     matches("day")), by = "rfid") %>% # add box and dates
   left_join(mitchell_wfu_metadata_c01_05[, c("sex", "rfid", "dob")], by = c("rfid")) %>% # add sex, dob
-  mutate_at(vars(matches("locomotor_day_\\d")), list(age = ~difftime(., dob, units = "days") %>% as.numeric)) 
-# %>%
-  mutate(date = lubridate::mdy(date),
-         experimentage = as.numeric(difftime(date, dob, units = "days")),
-         time = str_match(experiment, "U01-(.*?)-.*")[,2])
+  mutate_at(vars(matches("locomotor_day_\\d")), list(age = ~difftime(., dob, units = "days") %>% as.numeric)) %>% 
+  select(-dob, -matches("locomotor_day_\\d$")) %>% 
+  mutate(cage = as.character(cage))
+  
 
 
 
