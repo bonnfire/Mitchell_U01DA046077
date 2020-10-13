@@ -115,3 +115,62 @@ mitchell_macro_xl_df <- mitchell_macro_xl %>%
   rbindlist(idcol = "cohort") %>% 
   mutate(cohort = str_extract(cohort, "Shipment\\d+") %>% parse_number() %>% str_pad(2, "left", "0"))
 mitchell_macro_xl_df %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(cohort, subject) %>% select(cohort) %>% table()
+
+
+
+
+
+### extract metadata for experiments
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_")
+# C01 locomotor 
+c01_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/MITCHELL #1 SHIPPING SHEET with notes.xlsx")$`Metadata-Locomotor` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>% 
+  select(rfid, matches("locomotor|d\\d")) 
+# %>% 
+  # mutate(day_1_time = format(d1_time_in, format = "%H:%M:%S")) # XX eventually should change the times, but not essential for these GWAS deadline
+
+# C01 delay discounting
+
+
+
+# C02 locomotor 
+c02_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #2 Shipping Sheet with notes.xlsx")$`Metadata-Locomotor` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>% 
+  select(rfid, matches("locomotor|d\\d"))
+
+
+# C02 delay discounting
+
+
+
+# C03 locomotor 
+c03_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #3 Shipping Sheet_with cage order.xlsx")$`Metadata-Locomotor` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>% 
+  select(rfid, matches("locomotor|d\\d"))
+
+# C03 delay discounting
+
+
+# C04 locomotor 
+c04_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #4 Shipping sheet_Cage-ID-Info.xlsx")$`Metadata-Locomotor` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>% 
+  select(rfid, matches("locomotor|d\\d"))
+
+# C04 delay discounting
+
+
+
+
+
+# C05 locomotor 
+c05_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/MITCHELL #5 Shipping Sheet_with_notes.xlsx")$`Metadata-Locomotor` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>% 
+  select(rfid, matches("locomotor|d\\d"))
+
+# C05 delay discounting
+

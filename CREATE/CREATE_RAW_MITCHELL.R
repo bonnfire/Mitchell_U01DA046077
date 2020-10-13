@@ -644,18 +644,22 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA04
 dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
   separate(V1, into=c("experiment", "date"), sep = ":") %>% 
   mutate(cohort = sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0"),
-         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 203 observations from shipments 1-4
+         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 303 observations from shipments 1-5
   
   
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
 locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F)
-names(locomotor_raw) <- str_match(locomotorfilenames, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]
-locomotor_raw <- locomotor_raw %>%
-  rbindlist(idcol = "experiment", fill = T) %>% select(-EXPERIMENT) %>% 
+names(locomotor_raw) <- locomotorfilenames
+# names(locomotor_raw) <- str_match(locomotorfilenames, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]
+locomotor_raw_df <- locomotor_raw %>%
+  rbindlist(idcol = "filename", fill = T) %>% 
   clean_names %>% select_if(~sum(!is.na(.)) > 0) %>% 
-  mutate(subject_id = paste0("9330003200", subject_id)) %>% 
-  left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject_id")) %>% 
+  mutate(cohort = paste0("C", sub("\\D*(\\d{1}).*", "\\1", filename) %>% str_pad(width = 2, side = "left", pad = "0")),
+         group = str_extract(filename, "gp\\d+")) %>% 
   left_join(dates, by = c("experiment", "cohort")) %>%
+  mutate(subject_id = paste0("9330003200", subject_id)) %>% 
+  rename("rfid" = "subject_id") %>% 
+  left_join(WFU_Mitchell_test_df[,c("sex", "rfid", "dob")], by = c("rfid")) %>% 
   mutate(date = lubridate::mdy(date), 
          dob = lubridate::ymd(as.character(dob)),
          experimentage = as.numeric(difftime(date, dob, units = "days")),
@@ -663,13 +667,13 @@ locomotor_raw <- locomotor_raw %>%
 # %>% 
 #   select(-one_of("date", "dob"))
 
-locomotor_raw %>% ggplot(aes(x = cohort, y = experimentage, fill = sex, linetype =time )) + 
+locomotor_raw_df %>% ggplot(aes(x = cohort, y = experimentage, fill = sex, linetype =time )) + 
   geom_boxplot() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
                          axis.text.y = element_text(size = 15),
                          legend.text = element_text(size = 15) ) +
   labs(title = "Boxplots of Experiment age at locomotor time 1 and 2 by cohort")
-locomotor_raw %>% subset(is.na(date)) ## dropped animals
-# NOT NA locomotor_raw %>% select(cohort, sex, rfid, experiment) %>% distinct(rfid, experiment) %>% group_by(rfid) %>% add_count(rfid) %>% ungroup() %>% subset(n!=1)
+locomotor_raw_df %>% subset(is.na(date)) ## dropped animals
+# NOT NA locomotor_raw_df %>% select(cohort, sex, rfid, experiment) %>% distinct(rfid, experiment) %>% group_by(rfid) %>% add_count(rfid) %>% ungroup() %>% subset(n!=1)
 
 
 locomotors_vars <- c("total_distance_cm", "rest_time_s", "rest_episode_count", "movement_time_s", "movement_episode_count", "vertical_activity_count", 
@@ -679,8 +683,8 @@ my.summary = function(x) list(mean = mean(x),
                               skew = moments::skewness(x), 
                               kurt = moments::kurtosis(x), 
                               sum = sum(x))
-locomotor_avg = setDT(locomotor_raw)[, as.list(unlist(lapply(.SD, my.summary))),  
-                     by = .(experiment, cage, rfid, batch, time), 
+locomotor_avg = setDT(locomotor_raw_df)[, as.list(unlist(lapply(.SD, my.summary))),  
+                     by = .(cohort, experiment, cage, rfid, batch, time), 
                      .SDcols = locomotors_vars]
 
 locomotor_avg <- locomotor_avg %>% 

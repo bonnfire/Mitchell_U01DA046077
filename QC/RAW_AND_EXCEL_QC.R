@@ -6,6 +6,85 @@ library(stringr)
 library(data.table)
 library(ggplot2)
 
+### create phenotypes tables by joining data together
+
+
+
+# locomotor
+# fix the raw data before summarizing and spreading
+# using the data edits document for Shipment 1 (in Dropbox)
+c01_locomotor_df <- locomotor_raw_df %>%
+  subset(cohort == "C01") %>% 
+  mutate(rfid = replace(rfid, rfid == "933000320045912"&experiment =="U01-t1-gp11", "933000320045915"),
+         rfid = replace(rfid, rfid == "933000320046501"&experiment =="U01-t1-gp17", "933000320046051"),
+         rfid = replace(rfid, rfid == "933000320046059"&experiment %in% c("U01-t1-gp6", "U01-t2-gp6"), "933000320046057"),
+         rfid = replace(rfid, rfid == "933000320046195"&experiment == "U01-t1-gp20", "933000320046196")) 
+c01_metadata_locomotor
+
+c02_locomotor_df <- locomotor_raw_df %>%
+  subset(cohort == "C02") %>% 
+  mutate(rfid = replace(rfid, rfid == "933000320046353"&experiment =="U01-t1-gp25", "933000320046343"))
+
+c03_locomotor_df <- locomotor_raw_df %>%
+  subset(cohort == "C03")  %>% 
+  mutate(experiment = replace(experiment, experiment == "U01-t3-gp1", "U01-t1-gp1")) %>% 
+  mutate(rfid = replace(rfid, rfid == "933000320046896"&experiment =="U01-t2-gp8", "933000320046986"),
+         rfid = replace(rfid, rfid == "933000320037769"&experiment =="U01-t2-gp20", "933000320047769"),
+         rfid = replace(rfid, rfid == "933000320046800"&experiment == "U01-t2-gp18", "933000320047800")) 
+
+c04_locomotor_df <- locomotor_raw_df %>%
+  subset(cohort == "C04")  %>% 
+  mutate(comment = "NA") %>% 
+  mutate(comment = replace(comment, 
+                           rfid %in% c("47724", "47723", "47974", "47530"), 
+                           "Severe seizure phenotypes, might EXCLUDE FROM ANALYSIS"))
+  
+  
+c05_locomotor_df <- locomotor_raw_df %>%
+  subset(cohort == "C05")  %>% 
+  mutate(experiment = replace(experiment, experiment == "U01-t1-gp2a", "U01-t1-gp2"),
+         experiment = replace(experiment, experiment == "U01-t2a-gp21", "U01-t1-gp21"),
+         experiment = replace(experiment, experiment == "U01-t2a-gp22", "U01-t1-gp22")) 
+
+
+locomotor_raw_fix_c01_05 <- bind_rows(c01_locomotor_df, c02_locomotor_df) %>% 
+  bind_rows(c03_locomotor_df) %>% 
+  bind_rows(c04_locomotor_df) %>% 
+  bind_rows(c05_locomotor_df)
+
+
+  
+
+### GWAS phenotypes
+
+locomotor_gwas <- locomotor_raw_fix_c01_05 %>% 
+  mutate(time = str_match(experiment, "U01-(.*?)-.*")[,2]) %>% 
+  select(cohort, rfid, time, group, total_distance_cm, rest_time_s, rest_episode_count, 
+         movement_episode_count, vertical_activity_count, center_time_legacy_s, comment) %>% 
+  group_by(cohort, rfid, time, group, comment) %>% 
+  summarize_if(is.numeric, sum, na.rm = T) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = time, 
+              values_from = c(total_distance_cm, rest_time_s, rest_episode_count, 
+                              movement_episode_count, vertical_activity_count, center_time_legacy_s))
+
+
+
+locomotor_raw_df %>% 
+  # select(cohort, rfid, time, total_distance_cm, rest_time_s, rest_episode_count, 
+  #        movement_episode_count, vertical_activity_count, center_time_legacy_s) %>% 
+  # group_by(cohort, rfid, time) %>% 
+  # summarize_if(is.numeric, sum, na.rm = T) %>% 
+  # ungroup() %>% 
+  subset(rfid %in% c("933000320086891","933000320086962","933000320086968","933000320086970","933000320087079","933000320087131","933000320087212","933000320087214")) ## fix these with t2a
+
+
+
+
+
+
+##################### 
+
 mitchell_discounting_excel %>% dim
 discountingvalidtraits %>% dim
 
