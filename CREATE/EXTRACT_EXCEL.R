@@ -9,8 +9,8 @@ shipmentfiles <- list.files(path = ".", pattern = "Shipment\\d.xlsm") # 3 files
 
 ## extract the excel metadata about boxes/squads
 setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_")
-metadatafiles <- list.files(path = ".", pattern = "*.xlsx") 
-metadata <- lapply(metadatafiles, read_excel, sheet = "Sheet1")
+metadatafilesc01_05 <- list.files(path = ".", pattern = "*.xlsx") 
+metadata_c01_05 <- lapply(metadatafilesc01_05, read_excel, sheet = "Import-Info")
 names(metadata) = str_pad(regmatches(metadatafiles, gregexpr("[[:digit:]]+", metadatafiles)) %>% unlist(), 2, "left", "0")
 metadata <- lapply(metadata, function(x){
   x <- x %>% clean_names %>% 
@@ -126,9 +126,9 @@ setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_")
 c01_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/MITCHELL #1 SHIPPING SHEET with notes.xlsx")$`Metadata-Locomotor` %>% 
   clean_names() %>% 
   rename("rfid" = "transponder_id") %>% 
-  select(rfid, matches("locomotor|d\\d")) 
-# %>% 
-  # mutate(day_1_time = format(d1_time_in, format = "%H:%M:%S")) # XX eventually should change the times, but not essential for these GWAS deadline
+  select(rfid, matches("locomotor|d\\d")) %>% 
+  mutate(d1_time_in = sub("(\\d+)(\\d{2})", "\\1:\\2", d1_time_in),
+         d2_time_in = sub("(\\d+)(\\d{2})", "\\1:\\2", d2_time_in)) # XX eventually should change the times, but not essential for these GWAS deadline
 
 # C01 delay discounting
 
@@ -138,7 +138,8 @@ c01_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
 c02_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #2 Shipping Sheet with notes.xlsx")$`Metadata-Locomotor` %>% 
   clean_names() %>% 
   rename("rfid" = "transponder_id") %>% 
-  select(rfid, matches("locomotor|d\\d"))
+  select(rfid, matches("locomotor|d\\d")) %>% 
+  mutate_at(vars(matches("time")), ~format(., format = "%H:%M")) # extract the time from the datetime object, by default the date is incorrect
 
 
 # C02 delay discounting
@@ -149,7 +150,8 @@ c02_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
 c03_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #3 Shipping Sheet_with cage order.xlsx")$`Metadata-Locomotor` %>% 
   clean_names() %>% 
   rename("rfid" = "transponder_id") %>% 
-  select(rfid, matches("locomotor|d\\d"))
+  select(rfid, matches("locomotor|d\\d")) %>% 
+  mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
 
 # C03 delay discounting
 
@@ -158,7 +160,8 @@ c03_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
 c04_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #4 Shipping sheet_Cage-ID-Info.xlsx")$`Metadata-Locomotor` %>% 
   clean_names() %>% 
   rename("rfid" = "transponder_id") %>% 
-  select(rfid, matches("locomotor|d\\d"))
+  select(rfid, matches("locomotor|d\\d")) %>% 
+  mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
 
 # C04 delay discounting
 
@@ -170,7 +173,19 @@ c04_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
 c05_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/MITCHELL #5 Shipping Sheet_with_notes.xlsx")$`Metadata-Locomotor` %>% 
   clean_names() %>% 
   rename("rfid" = "transponder_id") %>% 
-  select(rfid, matches("locomotor|d\\d"))
+  select(rfid, matches("locomotor|d\\d")) %>% 
+  mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
+
 
 # C05 delay discounting
+
+
+# bind all locomotor 
+locomotor_metadata_c01_05 <- bind_rows(c01_metadata_locomotor, c02_metadata_locomotor) %>% 
+  bind_rows(c03_metadata_locomotor) %>% 
+  bind_rows(c04_metadata_locomotor) %>% 
+  bind_rows(c05_metadata_locomotor)
+
+# bind all delay discounting 
+
 

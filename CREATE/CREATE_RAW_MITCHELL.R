@@ -643,9 +643,10 @@ mitchell_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11,
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-locomotor")
 dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
   separate(V1, into=c("experiment", "date"), sep = ":") %>% 
-  mutate(cohort = sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0"),
+  mutate(cohort = paste0("C", sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0")),
          experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 303 observations from shipments 1-5
-  
+         # experiment = str_extract(experiment, "U01-t\\d-gp\\d+")) # 303 observations from shipments 1-5
+         
   
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
 locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F)
@@ -656,16 +657,19 @@ locomotor_raw_df <- locomotor_raw %>%
   clean_names %>% select_if(~sum(!is.na(.)) > 0) %>% 
   mutate(cohort = paste0("C", sub("\\D*(\\d{1}).*", "\\1", filename) %>% str_pad(width = 2, side = "left", pad = "0")),
          group = str_extract(filename, "gp\\d+")) %>% 
-  left_join(dates, by = c("experiment", "cohort")) %>%
-  mutate(subject_id = paste0("9330003200", subject_id)) %>% 
-  rename("rfid" = "subject_id") %>% 
-  left_join(WFU_Mitchell_test_df[,c("sex", "rfid", "dob")], by = c("rfid")) %>% 
-  mutate(date = lubridate::mdy(date), 
-         dob = lubridate::ymd(as.character(dob)),
-         experimentage = as.numeric(difftime(date, dob, units = "days")),
-         time = str_match(experiment, "U01-(.*?)-.*")[,2]) 
+  # left_join(dates, by = c("experiment", "cohort")) %>%
+  rowwise() %>%
+  mutate(rfid = subject_id,
+         rfid = replace(rfid, parse_number(cohort) < 5, paste0("9330003200", subject_id)),
+         rfid = replace(rfid, parse_number(cohort) >= 5, paste0("9330003201", subject_id))) %>% 
+  ungroup() 
 # %>% 
-#   select(-one_of("date", "dob"))
+  # left_join(mitchell_wfu_metadata_c01_05[,c("sex", "rfid", "dob")], by = c("rfid")) 
+# %>% 
+  # mutate(date = lubridate::mdy(date), 
+  #        experimentage = as.numeric(difftime(date, dob, units = "days")),
+  #        time = str_match(experiment, "U01-(.*?)-.*")[,2]) 
+
 
 locomotor_raw_df %>% ggplot(aes(x = cohort, y = experimentage, fill = sex, linetype =time )) + 
   geom_boxplot() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),

@@ -58,26 +58,24 @@ locomotor_raw_fix_c01_05 <- bind_rows(c01_locomotor_df, c02_locomotor_df) %>%
 ### GWAS phenotypes
 
 locomotor_gwas <- locomotor_raw_fix_c01_05 %>% 
-  mutate(time = str_match(experiment, "U01-(.*?)-.*")[,2]) %>% 
+  mutate(time = str_match(experiment, "U01-(.*?)-.*")[,2]) %>% # after manually fixing above, repopulate the column
   select(cohort, rfid, time, group, total_distance_cm, rest_time_s, rest_episode_count, 
          movement_episode_count, vertical_activity_count, center_time_legacy_s, comment) %>% 
-  group_by(cohort, rfid, time, group, comment) %>% 
+  group_by(cohort, rfid, time, group, comment) %>% # after fixes, regroup
   summarize_if(is.numeric, sum, na.rm = T) %>% 
   ungroup() %>% 
   pivot_wider(names_from = time, 
               values_from = c(total_distance_cm, rest_time_s, rest_episode_count, 
                               movement_episode_count, vertical_activity_count, center_time_legacy_s))
 
-
-
-locomotor_raw_df %>% 
-  # select(cohort, rfid, time, total_distance_cm, rest_time_s, rest_episode_count, 
-  #        movement_episode_count, vertical_activity_count, center_time_legacy_s) %>% 
-  # group_by(cohort, rfid, time) %>% 
-  # summarize_if(is.numeric, sum, na.rm = T) %>% 
-  # ungroup() %>% 
-  subset(rfid %in% c("933000320086891","933000320086962","933000320086968","933000320086970","933000320087079","933000320087131","933000320087212","933000320087214")) ## fix these with t2a
-
+locomotor_gwas_metadata <- locomotor_gwas %>% 
+  left_join(locomotor_metadata_c01_05 %>% select(rfid, locomotor_testing_cage, matches("day")), by = "rfid") %>% # add box and dates
+  left_join(mitchell_wfu_metadata_c01_05[, c("sex", "rfid", "dob")], by = c("rfid")) %>% # add sex, dob
+  mutate_at(vars(matches("locomotor_day_\\d")), list(age = ~difftime(., dob, units = "days") %>% as.numeric)) 
+# %>%
+  mutate(date = lubridate::mdy(date),
+         experimentage = as.numeric(difftime(date, dob, units = "days")),
+         time = str_match(experiment, "U01-(.*?)-.*")[,2])
 
 
 
