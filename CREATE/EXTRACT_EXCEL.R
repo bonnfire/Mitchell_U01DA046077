@@ -117,6 +117,69 @@ mitchell_macro_xl_df <- mitchell_macro_xl %>%
 mitchell_macro_xl_df %>% mutate(subject = str_extract(filename, "Subject \\d+")) %>% distinct(cohort, subject) %>% select(cohort) %>% table()
 
 
+### extract the summary data created from mitchell's lab  (macros)
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information")
+mitchell_xl <- list.files(path = ".", pattern = "AA_Processing_Macro_Shipment\\d+?.xlsm")
+extract_mitchell_macro_summary_xl <- function(x){
+  
+  u01.importxlsx.colname <- function(xlname){
+    path_sheetnames <- excel_sheets(xlname)
+    df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, col_names = F)
+    names(df) <- path_sheetnames
+    return(df)
+  }
+  
+  
+  df <- u01.importxlsx.colname(x) 
+  
+  if(any(grepl("Instructions", names(df)))){
+    df <- df[-grep("Instructions", names(df))] # remove the sheet that is throwing an error becasue of [c(105:113), c(1:8)] 
+  }
+  
+  df <- df %>% 
+    lapply(., function(x){
+      x <- x[c(105:113), c(1:8)] %>% 
+        t() %>% 
+        as.data.frame() %>%
+        rename("delay" = "V1",
+               "trials45_bin" = "V2",
+               "mean_of_medians" = "V3",
+               "n_analyzed" = "V4",
+               "percent_choice" = "V5",
+               "rxntime_delay_avg" = "V6",
+               "choicerxntime_delay_avg" = "V7",
+               "rxntime_imm_avg" = "V8",
+               "choicerxntime_imm_avg" = "V9") %>%
+        slice(-1) %>%
+        mutate_all(as.character)
+      return(x)
+    }) %>% rbindlist(idcol = "tab") %>%
+  dplyr::filter(grepl("Sub\\d+", tab))
+  return(df)
+} 
+mitchell_macro_summary_xl <- lapply(mitchell_xl, extract_mitchell_macro_summary_xl) 
+mitchell_macro_summary_xl_df <- mitchell_macro_summary_xl %>% 
+  rbindlist() %>% 
+  rowwise() %>%
+  mutate(subject = gsub("Sub", "", tab)) %>% 
+         # rfid = replace(rfid, parse_number(cohort) < 5, paste0("9330003200", subject_id)),
+         # rfid = replace(rfid, parse_number(cohort) >= 5, paste0("9330003201", subject_id))) %>% 
+  ungroup() %>% 
+  left_join(mitchell_wfu_metadata_c01_05 %>%
+              mutate(subject = str_extract(rfid, "\\d{5}$")) %>% 
+              select(cohort, rfid, subject, dob, sex), 
+            by = "subject") %>% 
+  mutate_at(vars(-matches("tab|subject|cohort|rfid|dob|sex")), as.numeric) %>% 
+  subset(!is.na(delay)) %>% 
+  select(-tab,-subject,-trials45_bin) # subject and tab are redundant with rfid, trials45_bin was removed after verifying that it is 100% empty  
+# check that names_from = delay will not have invalid values
+mitchell_macro_summary_xl_df %>% select(delay) %>% table()
+
+# turn into wide
+mitchell_macro_summary_xl_df_wide <- mitchell_macro_summary_xl_df %>% 
+   pivot_wider(names_from = delay, 
+              values_from = c(mean_of_medians, n_analyzed, percent_choice, rxntime_delay_avg, 
+                              choicerxntime_delay_avg, rxntime_imm_avg, choicerxntime_imm_avg)) 
 
 
 
@@ -131,7 +194,13 @@ c01_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
          d2_time_in = sub("(\\d+)(\\d{2})", "\\1:\\2", d2_time_in)) # XX eventually should change the times, but not essential for these GWAS deadline
 
 # C01 delay discounting
-
+c01_metadata_dd <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/MITCHELL #1 SHIPPING SHEET with notes.xlsx")$`Metadata-DD` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>%
+  rename_at(vars(one_of("squad_number", 
+                        # "box_color", 
+                        "computer", "operant_box", "assigned_lever")), ~ paste0("dd_", .)) %>% 
+  select(rfid, starts_with("dd_"))
 
 
 # C02 locomotor 
@@ -143,7 +212,13 @@ c02_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
 
 
 # C02 delay discounting
-
+c02_metadata_dd <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #2 Shipping Sheet with notes.xlsx")$`Metadata-DD` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>%
+  rename_at(vars(one_of("squad_number", 
+                        # "box_color", 
+                        "computer", "operant_box", "assigned_lever")), ~ paste0("dd_", .)) %>% 
+  select(rfid, starts_with("dd_"))
 
 
 # C03 locomotor 
@@ -154,6 +229,13 @@ c03_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
   mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
 
 # C03 delay discounting
+c03_metadata_dd <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #3 Shipping Sheet_with cage order.xlsx")$`Metadata-DD` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id") %>%
+  rename_at(vars(one_of("squad_number", 
+                        # "box_color", 
+                        "computer", "operant_box", "assigned_lever")), ~ paste0("dd_", .)) %>% 
+  select(rfid, starts_with("dd_"))
 
 
 # C04 locomotor 
@@ -164,7 +246,14 @@ c04_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
   mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
 
 # C04 delay discounting
-
+c04_metadata_dd <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/U01_Shipment_Details_/Mitchell #4 Shipping sheet_Cage-ID-Info.xlsx")$`Metadata-DD` %>% 
+  clean_names() %>% 
+  rename("rfid" = "transponder_id",
+         "squad_number" = "squad") %>%
+  rename_at(vars(one_of("squad_number", 
+                        # "box_color", 
+                        "computer", "operant_box", "assigned_lever")), ~ paste0("dd_", .)) %>% 
+  select(rfid, starts_with("dd_"))
 
 
 
@@ -177,8 +266,13 @@ c05_metadata_locomotor <- u01.importxlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchel
   mutate_at(vars(matches("time")), ~format(., format = "%H:%M"))
 
 
-# C05 delay discounting
+# C05 delay discounting 
+## DD WILL NOT BE DONE FOR COHORT 5
 
+
+
+# =============================================
+# =============================================
 
 # bind all locomotor 
 locomotor_metadata_c01_05 <- bind_rows(c01_metadata_locomotor, c02_metadata_locomotor) %>% 
@@ -187,5 +281,9 @@ locomotor_metadata_c01_05 <- bind_rows(c01_metadata_locomotor, c02_metadata_loco
   bind_rows(c05_metadata_locomotor)
 
 # bind all delay discounting 
-
+dd_metadata_c01_04 <- bind_rows(c01_metadata_dd, c02_metadata_dd) %>% 
+  bind_rows(c03_metadata_dd) %>% 
+  bind_rows(c04_metadata_dd) 
+# %>% 
+  # bind_rows(c05_metadata_dd)
 

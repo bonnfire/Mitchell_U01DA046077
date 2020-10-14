@@ -78,8 +78,33 @@ locomotor_gwas_metadata <- locomotor_gwas %>%
   left_join(mitchell_wfu_metadata_c01_05[, c("sex", "rfid", "dob")], by = c("rfid")) %>% # add sex, dob
   mutate_at(vars(matches("locomotor_day_\\d")), list(age = ~difftime(., dob, units = "days") %>% as.numeric)) %>% 
   select(-dob, -matches("locomotor_day_\\d$")) %>% 
-  mutate(cage = as.character(cage))
+  mutate(cage = as.character(cage)) %>% 
+  group_by(cohort, rfid, time, group, comment, cage) %>% # after fixes, regroup
+  summarize_if(is.numeric, sum, na.rm = T) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = time, 
+              values_from = c(total_distance_cm, rest_time_s, rest_episode_count, 
+                              movement_episode_count, vertical_activity_count, center_time_legacy_s)) %>% 
   
+
+
+
+
+
+
+
+
+
+
+
+### GWAS delayed discounting
+discountingvalidtraits <- discountingvalidtraits %>% 
+  left_join(mitchell_wfu_metadata_c01_05 %>% 
+              mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
+              select(one_of("subject", "sex", "rfid", "dob")), by = c("subject")) %>% # add sex, dob
+  select(-one_of("filename", "time")) %>% 
+  # left_join()
+
 
 
 
