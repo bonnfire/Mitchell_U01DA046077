@@ -641,12 +641,12 @@ mitchell_raw_macro <- discounting_df %>% subset(!is.na(reward)&codes %in% c(-11,
 ############ LOCOMOTOR ##################
 #########################################
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-locomotor")
-dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
-  separate(V1, into=c("experiment", "date"), sep = ":") %>% 
-  mutate(cohort = paste0("C", sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0")),
-         experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 303 observations from shipments 1-5
-         # experiment = str_extract(experiment, "U01-t\\d-gp\\d+")) # 303 observations from shipments 1-5
-         
+# dates <- data.frame(V1=system(paste0("grep -ira1 \"creation\" | grep -irEo \"[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}\""), intern = T)) %>%  
+#   separate(V1, into=c("experiment", "date"), sep = ":") %>% 
+#   mutate(cohort = paste0("C", sub("\\D*(\\d{1}).*", "\\1", experiment) %>% str_pad(width = 2, side = "left", pad = "0")),
+#          experiment = str_match(experiment, "Shipment\\d_locomotor/(.*?)(U.*?)(comp|com)?.csv")[,3]) # 303 observations from shipments 1-5
+#          # experiment = str_extract(experiment, "U01-t\\d-gp\\d+")) # 303 observations from shipments 1-5
+#          
   
 locomotorfilenames <- list.files(pattern = "*.csv", recursive = T)
 locomotor_raw <- lapply(locomotorfilenames, read.csv, skip = 58, header = T, sep = ',', stringsAsFactors = F)

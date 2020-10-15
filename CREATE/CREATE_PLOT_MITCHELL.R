@@ -338,9 +338,59 @@ mitchell_raw_macro_expanded %>%
         axis.text.y = element_text(hjust = 1, size = 12)) 
 
 
+# plot c01-05 for gwas locomotor 
+setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
+pdf("gwas_locomotor_qc.pdf", onefile = T)
+
+
+plot_list_main = list()
+plot_list = list()
+plot_list2 = list()
+plot_list3 = list()
+plot_list4 = list()
+
+gwas_vars <- grep("cohort|rfid|group|comment|sex|_age|cage", names(locomotor_gwas_metadata), value = T, invert = T)
+
+for (i in seq_along(gwas_vars)){
+  
+  plot_list_main[[i]] <- locomotor_gwas_metadata %>%
+    ggplot() +
+    geom_density(aes_string(gwas_vars[i])) +
+    theme(axis.text=element_text(size=12))
+  
+  plot_list[[i]] <- locomotor_gwas_metadata %>%
+    ggplot(aes(x = cohort)) +
+    geom_boxplot(aes_string(y = gwas_vars[i])) +
+    theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+  plot_list2[[i]] <- locomotor_gwas_metadata %>%
+    ggplot() +
+    geom_density(aes_string(gwas_vars[i])) +
+    facet_grid(rows = vars(cohort)) +
+    theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+  
+  plot_list3[[i]] <- locomotor_gwas_metadata %>%
+    ggplot(aes(x = cage, fill = sex)) +
+    geom_boxplot(aes_string(y = gwas_vars[i])) +
+    theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+  plot_list4[[i]] <- locomotor_gwas_metadata %>%
+    ggplot(aes(color = sex)) +
+    geom_density(aes_string(gwas_vars[i])) +
+    facet_grid(rows = vars(cage)) +
+    theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+  
+  
+  print(plot_list_main[[i]])
+  print(plot_list[[i]])
+  print(plot_list2[[i]])
+  print(plot_list3[[i]])
+  print(plot_list4[[i]])
+  
+}
+dev.off()
 
 
 
+discounting_gwas
 
 
 

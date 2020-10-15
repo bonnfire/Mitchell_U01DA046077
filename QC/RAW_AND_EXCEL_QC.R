@@ -19,7 +19,6 @@ c01_locomotor_df <- locomotor_raw_df %>%
          rfid = replace(rfid, rfid == "933000320046501"&experiment =="U01-t1-gp17", "933000320046051"),
          rfid = replace(rfid, rfid == "933000320046059"&experiment %in% c("U01-t1-gp6", "U01-t2-gp6"), "933000320046057"),
          rfid = replace(rfid, rfid == "933000320046195"&experiment == "U01-t1-gp20", "933000320046196")) 
-c01_metadata_locomotor
 
 c02_locomotor_df <- locomotor_raw_df %>%
   subset(cohort == "C02") %>% 
@@ -59,9 +58,13 @@ locomotor_raw_fix_c01_05 <- bind_rows(c01_locomotor_df, c02_locomotor_df) %>%
 
 locomotor_gwas <- locomotor_raw_fix_c01_05 %>% 
   mutate(time = str_match(experiment, "U01-(.*?)-.*")[,2]) %>% # after manually fixing above, repopulate the column
-  select(cohort, rfid, time, group, cage, total_distance_cm, rest_time_s, rest_episode_count, 
+  select(cohort, rfid, time, 
+         # group, 
+         cage, total_distance_cm, rest_time_s, rest_episode_count, 
          movement_episode_count, vertical_activity_count, center_time_legacy_s, comment) %>% 
-  group_by(cohort, rfid, time, group, comment, cage) %>% # after fixes, regroup
+  group_by(cohort, rfid, time, 
+           # group, 
+           comment, cage) %>% # after fixes, regroup
   summarize_if(is.numeric, sum, na.rm = T) %>% 
   ungroup() %>% 
   pivot_wider(names_from = time, 
@@ -70,7 +73,7 @@ locomotor_gwas <- locomotor_raw_fix_c01_05 %>%
   mutate(cage = parse_number(cage))
 
 # join the metadata (box and age)
-locomotor_gwas_metadata <- locomotor_gwas %>% 
+locomotor_gwas_metadata_c01_05 <- locomotor_gwas %>% 
   left_join(locomotor_metadata_c01_05 %>% 
               select(rfid, 
                      # locomotor_testing_cage, # drop box for now, XX 10/13/2020 resolve these two locomotor_gwas_metadata %>% subset(cage != locomotor_testing_cage) %>% View() when they respond
@@ -79,12 +82,7 @@ locomotor_gwas_metadata <- locomotor_gwas %>%
   mutate_at(vars(matches("locomotor_day_\\d")), list(age = ~difftime(., dob, units = "days") %>% as.numeric)) %>% 
   select(-dob, -matches("locomotor_day_\\d$")) %>% 
   mutate(cage = as.character(cage)) %>% 
-  group_by(cohort, rfid, time, group, comment, cage) %>% # after fixes, regroup
-  summarize_if(is.numeric, sum, na.rm = T) %>% 
-  ungroup() %>% 
-  pivot_wider(names_from = time, 
-              values_from = c(total_distance_cm, rest_time_s, rest_episode_count, 
-                              movement_episode_count, vertical_activity_count, center_time_legacy_s)) %>% 
+  subset(!rfid %in% c("933000320186695", "933000320187713")) # rfid's don't match as the ones in the wfu metadata, waiting for deborah's and katie's responses
   
 
 
@@ -98,13 +96,40 @@ locomotor_gwas_metadata <- locomotor_gwas %>%
 
 
 ### GWAS delayed discounting
-discountingvalidtraits <- discountingvalidtraits %>% 
+discounting_c01_03 <- rbind(discountingvalidtraits, 
+                            discountingvalidtraits_c03)
+discounting_gwas <- discounting_c01_03 %>%
   left_join(mitchell_wfu_metadata_c01_05 %>% 
               mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
-              select(one_of("subject", "sex", "rfid", "dob")), by = c("subject")) %>% # add sex, dob
-  select(-one_of("filename", "time")) %>% 
-  # left_join()
+              select(one_of("cohort", "subject", "sex", "rfid", "dob")), by = c("subject")) %>% # add sex, dob
+  select(-one_of("filename", "time", "date", "subject")) %>% 
+  mutate(delay = as.character(delay)) %>% 
+  group_by(cohort, rfid, sex, delay) %>% 
+  summarize_if(is.numeric, mean) %>% 
+  ungroup() %>% 
+  rename_if(is.numeric, ~ paste0(., "_mean")) %>% 
+  pivot_wider(names_from = delay, 
+              values_from = matches("_mean"))
 
+discounting_gwas_metadata_c01_03 <- discounting_gwas %>% 
+  full_join(mitchell_macro_summary_xl_df_wide, by = c("cohort", "rfid", "sex")) %>% # add mitchell variables
+  left_join(dd_metadata_c01_04, by = "rfid") %>% # add wfu and mitchell metadata
+  left_join(discounting_c01_03 %>%
+              left_join(mitchell_wfu_metadata_c01_05 %>% 
+                          mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
+                          select(one_of("cohort", "subject", "sex", "rfid", "dob")), 
+                        by = c("subject")) %>% 
+              arrange(date) %>% 
+              select(rfid, dob, date, delay) %>% 
+              group_by(rfid, delay) %>% 
+              slice(1) %>% 
+              ungroup() %>% 
+              mutate(age = difftime(date, dob, units = "days") %>% as.numeric(), 
+                     delay = paste0("age_", delay)) %>% 
+              select(-dob, -date) %>% 
+              pivot_wider(names_from = delay, values_from = age), 
+            by = "rfid") %>% # add date 
+  select(-dob)
 
 
 
