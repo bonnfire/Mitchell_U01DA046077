@@ -157,8 +157,8 @@ extract_mitchell_macro_summary_xl <- function(x){
   dplyr::filter(grepl("Sub\\d+", tab))
   return(df)
 } 
-mitchell_macro_summary_xl <- lapply(mitchell_xl, extract_mitchell_macro_summary_xl) 
-mitchell_macro_summary_xl_df <- mitchell_macro_summary_xl %>% 
+mitchell_macro_summary_extremes_xl <- lapply(mitchell_xl, extract_mitchell_macro_summary_xl) 
+mitchell_macro_summary_extremes_xl_df <- mitchell_macro_summary_extremes_xl %>% 
   rbindlist() %>% 
   rowwise() %>%
   mutate(subject = gsub("Sub", "", tab)) %>% 
@@ -173,13 +173,81 @@ mitchell_macro_summary_xl_df <- mitchell_macro_summary_xl %>%
   subset(!is.na(delay)) %>% 
   select(-tab,-subject,-trials45_bin) # subject and tab are redundant with rfid, trials45_bin was removed after verifying that it is 100% empty  
 # check that names_from = delay will not have invalid values
-mitchell_macro_summary_xl_df %>% select(delay) %>% table()
+mitchell_macro_summary_extremes_xl_df %>% select(delay) %>% table()
 
 # turn into wide
-mitchell_macro_summary_xl_df_wide <- mitchell_macro_summary_xl_df %>% 
+mitchell_macro_summary_extremes_xl_df_wide <- mitchell_macro_summary_extremes_xl_df %>% 
+  rename_at(vars(one_of("mean_of_medians", "n_analyzed", "percent_choice", "rxntime_delay_avg", 
+                        "choicerxntime_delay_avg", "rxntime_imm_avg", "choicerxntime_imm_avg")), ~ paste0(., "_extremetrials")) %>% 
    pivot_wider(names_from = delay, 
-              values_from = c(mean_of_medians, n_analyzed, percent_choice, rxntime_delay_avg, 
-                              choicerxntime_delay_avg, rxntime_imm_avg, choicerxntime_imm_avg)) 
+              values_from = c(mean_of_medians_extremetrials, n_analyzed_extremetrials, percent_choice_extremetrials, rxntime_delay_avg_extremetrials, 
+                              choicerxntime_delay_avg_extremetrials, rxntime_imm_avg_extremetrials, choicerxntime_imm_avg_extremetrials)) 
+
+
+### extract the summary data created from mitchell's lab  (macros)
+setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information")
+mitchell_xl <- list.files(path = ".", pattern = "AA_Processing_Macro_Shipment\\d+?.xlsm")
+extract_mitchell_macro_summary_xl_noextremes <- function(x){
+  
+  u01.importxlsx.colname <- function(xlname){
+    path_sheetnames <- excel_sheets(xlname)
+    df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, col_names = F)
+    names(df) <- path_sheetnames
+    return(df)
+  }
+  
+  
+  df <- u01.importxlsx.colname(x) 
+  
+  if(any(grepl("Instructions", names(df)))){
+    df <- df[-grep("Instructions", names(df))] # remove the sheet that is throwing an error because of [c(105, 117:123), c(1:8)] 
+  }
+  
+  df <- df %>% 
+    lapply(., function(x){
+      x <- x[c(105, 117:123), c(1:8)] %>% 
+        t() %>% 
+        as.data.frame() %>%
+        rename("delay" = "V1",
+               "mean_of_medians" = "V2",
+               "n_analyzed" = "V3",
+               "percent_choice" = "V4",
+               "rxntime_delay_avg" = "V5",
+               "choicerxntime_delay_avg" = "V6",
+               "rxntime_imm_avg" = "V7",
+               "choicerxntime_imm_avg" = "V8") %>%
+        slice(-1) %>%
+        mutate_all(as.character)
+      return(x)
+    }) %>% rbindlist(idcol = "tab") %>%
+    dplyr::filter(grepl("Sub\\d+", tab))
+  return(df)
+} 
+mitchell_macro_summary_noextremes_xl <- lapply(mitchell_xl, extract_mitchell_macro_summary_xl_noextremes) 
+mitchell_macro_summary_noextremes_xl_df <- mitchell_macro_summary_noextremes_xl %>% 
+  rbindlist() %>% 
+  rowwise() %>%
+  mutate(subject = gsub("Sub", "", tab)) %>% 
+  # rfid = replace(rfid, parse_number(cohort) < 5, paste0("9330003200", subject_id)),
+  # rfid = replace(rfid, parse_number(cohort) >= 5, paste0("9330003201", subject_id))) %>% 
+  ungroup() %>% 
+  left_join(mitchell_wfu_metadata_c01_05 %>%
+              mutate(subject = str_extract(rfid, "\\d{5}$")) %>% 
+              select(cohort, rfid, subject, dob, sex), 
+            by = "subject") %>% 
+  mutate_at(vars(-matches("tab|subject|cohort|rfid|dob|sex")), as.numeric) %>% 
+  subset(!is.na(delay)) %>% 
+  select(-tab,-subject) # subject and tab are redundant with rfid, trials45_bin was removed after verifying that it is 100% empty  
+# check that names_from = delay will not have invalid values
+mitchell_macro_summary_noextremes_xl_df %>% select(delay) %>% table()
+
+# turn into wide
+mitchell_macro_summary_noextremes_xl_df_wide <- mitchell_macro_summary_noextremes_xl_df %>% 
+  rename_at(vars(one_of("mean_of_medians", "n_analyzed", "percent_choice", "rxntime_delay_avg", 
+                        "choicerxntime_delay_avg", "rxntime_imm_avg", "choicerxntime_imm_avg")), ~ paste0(., "_noextremetrials")) %>% 
+  pivot_wider(names_from = delay, 
+              values_from = c(mean_of_medians_noextremetrials, n_analyzed_noextremetrials, percent_choice_noextremetrials, rxntime_delay_avg_noextremetrials, 
+                              choicerxntime_delay_avg_noextremetrials, rxntime_imm_avg_noextremetrials, choicerxntime_imm_avg_noextremetrials)) 
 
 
 

@@ -112,7 +112,8 @@ discounting_gwas <- discounting_c01_03 %>%
               values_from = matches("_mean"))
 
 discounting_gwas_metadata_c01_03 <- discounting_gwas %>% 
-  full_join(mitchell_macro_summary_xl_df_wide, by = c("cohort", "rfid", "sex")) %>% # add mitchell variables
+  full_join(mitchell_macro_summary_extremes_xl_df_wide, by = c("cohort", "rfid", "sex")) %>% # add mitchell extreme variables
+  full_join(mitchell_macro_summary_noextremes_xl_df_wide, by = c("cohort", "rfid", "sex", "dob")) %>% # add mitchell extreme variables
   left_join(dd_metadata_c01_04, by = "rfid") %>% # add wfu and mitchell metadata
   left_join(discounting_c01_03 %>%
               left_join(mitchell_wfu_metadata_c01_05 %>% 
