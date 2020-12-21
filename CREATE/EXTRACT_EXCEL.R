@@ -26,29 +26,29 @@ metadata <- metadata %>% rbindlist(idcol = "cohort")
 
 
 ### extract the data created from mitchell's lab (katie)
-setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information/KG Python Script Materials")
-read_excel_values_discounting <- function(xlname){
-  path_sheetnames <- excel_sheets(xlname)
-  df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, range = cell_cols("B")) # only extract the second column bc this one has values, will assign the column names later
-  df <- lapply(df, function(x){
-    x <- x %>% t() %>% 
-      as.data.frame()
-    rownames(x) <- NULL
-    return(x)
-  })
-  names(df) <- path_sheetnames
-  return(df)
-}
-mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelFiles2.xlsm") %>% rbindlist() %>% 
-  mutate(time = sub(".*_(\\d+h\\d+m)_.*", "\\1", V1) %>% strptime(format = "%Hh%Mm") %>% format("%H:%M")) %>% 
-  select(V1, V2, V3, time, everything())
-
-names(mitchell_discounting_excel_original) <- names(discountingvalidtraits)
-
-mitchell_discounting_excel <- mitchell_discounting_excel_original %>% 
-  mutate_all(as.character) %>% 
-  mutate_at(vars(-one_of("filename", "subject", "date", "time")), as.numeric) %>%
-  mutate_at(vars(one_of("date")), lubridate::ymd)
+# setwd("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Protocol-materials/DD-programs/Data-Analysis-Information/KG Python Script Materials")
+# read_excel_values_discounting <- function(xlname){
+#   path_sheetnames <- excel_sheets(xlname)
+#   df <- lapply(excel_sheets(path = xlname), read_excel, path = xlname, range = cell_cols("B")) # only extract the second column bc this one has values, will assign the column names later
+#   df <- lapply(df, function(x){
+#     x <- x %>% t() %>% 
+#       as.data.frame()
+#     rownames(x) <- NULL
+#     return(x)
+#   })
+#   names(df) <- path_sheetnames
+#   return(df)
+# }
+# mitchell_discounting_excel_original <- read_excel_values_discounting("MergedExcelFiles2.xlsm") %>% rbindlist() %>% 
+#   mutate(time = sub(".*_(\\d+h\\d+m)_.*", "\\1", V1) %>% strptime(format = "%Hh%Mm") %>% format("%H:%M")) %>% 
+#   select(V1, V2, V3, time, everything())
+# 
+# names(mitchell_discounting_excel_original) <- names(discountingvalidtraits)
+# 
+# mitchell_discounting_excel <- mitchell_discounting_excel_original %>% 
+#   mutate_all(as.character) %>% 
+#   mutate_at(vars(-one_of("filename", "subject", "date", "time")), as.numeric) %>%
+#   mutate_at(vars(one_of("date")), lubridate::ymd)
   
 
 
