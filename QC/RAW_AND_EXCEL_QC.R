@@ -95,42 +95,42 @@ locomotor_gwas_metadata_c01_05 <- locomotor_gwas %>%
 
 
 
-### GWAS delayed discounting
-discounting_c01_03 <- rbind(discountingvalidtraits, 
-                            discountingvalidtraits_c03)
-discounting_gwas <- discounting_c01_03 %>%
-  left_join(mitchell_wfu_metadata_c01_05 %>% 
-              mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
-              select(one_of("cohort", "subject", "sex", "rfid", "dob")), by = c("subject")) %>% # add sex, dob
-  select(-one_of("filename", "time", "date", "subject")) %>% 
-  mutate(delay = as.character(delay)) %>% 
-  group_by(cohort, rfid, sex, delay) %>% 
-  summarize_if(is.numeric, mean) %>% 
-  ungroup() %>% 
-  rename_if(is.numeric, ~ paste0(., "_mean")) %>% 
-  pivot_wider(names_from = delay, 
-              values_from = matches("_mean"))
-
-discounting_gwas_metadata_c01_03 <- discounting_gwas %>% 
-  full_join(mitchell_macro_summary_extremes_xl_df_wide, by = c("cohort", "rfid", "sex")) %>% # add mitchell extreme variables
-  full_join(mitchell_macro_summary_noextremes_xl_df_wide, by = c("cohort", "rfid", "sex", "dob")) %>% # add mitchell extreme variables
-  left_join(dd_metadata_c01_04, by = "rfid") %>% # add wfu and mitchell metadata
-  left_join(discounting_c01_03 %>%
-              left_join(mitchell_wfu_metadata_c01_05 %>% 
-                          mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
-                          select(one_of("cohort", "subject", "sex", "rfid", "dob")), 
-                        by = c("subject")) %>% 
-              arrange(date) %>% 
-              select(rfid, dob, date, delay) %>% 
-              group_by(rfid, delay) %>% 
-              slice(1) %>% 
-              ungroup() %>% 
-              mutate(age = difftime(date, dob, units = "days") %>% as.numeric(), 
-                     delay = paste0("age_", delay)) %>% 
-              select(-dob, -date) %>% 
-              pivot_wider(names_from = delay, values_from = age), 
-            by = "rfid") %>% # add date 
-  select(-dob)
+### GWAS delayed discounting (before suzanne post nida meeting)
+# discounting_c01_03 <- rbind(discountingvalidtraits, 
+#                             discountingvalidtraits_c03)
+# discounting_gwas <- discounting_c01_03 %>%
+#   left_join(mitchell_wfu_metadata_c01_05 %>% 
+#               mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
+#               select(one_of("cohort", "subject", "sex", "rfid", "dob")), by = c("subject")) %>% # add sex, dob
+#   select(-one_of("filename", "time", "date", "subject")) %>% 
+#   mutate(delay = as.character(delay)) %>% 
+#   group_by(cohort, rfid, sex, delay) %>% 
+#   summarize_if(is.numeric, mean) %>% 
+#   ungroup() %>% 
+#   rename_if(is.numeric, ~ paste0(., "_mean")) %>% 
+#   pivot_wider(names_from = delay, 
+#               values_from = matches("_mean"))
+# 
+# discounting_gwas_metadata_c01_03 <- discounting_gwas %>% 
+#   full_join(mitchell_macro_summary_extremes_xl_df_wide, by = c("cohort", "rfid", "sex")) %>% # add mitchell extreme variables
+#   full_join(mitchell_macro_summary_noextremes_xl_df_wide, by = c("cohort", "rfid", "sex", "dob")) %>% # add mitchell extreme variables
+#   left_join(dd_metadata_c01_04, by = "rfid") %>% # add wfu and mitchell metadata
+#   left_join(discounting_c01_03 %>%
+#               left_join(mitchell_wfu_metadata_c01_05 %>% 
+#                           mutate(subject = gsub(".*(\\d{5})$", "\\1", rfid)) %>% 
+#                           select(one_of("cohort", "subject", "sex", "rfid", "dob")), 
+#                         by = c("subject")) %>% 
+#               arrange(date) %>% 
+#               select(rfid, dob, date, delay) %>% 
+#               group_by(rfid, delay) %>% 
+#               slice(1) %>% 
+#               ungroup() %>% 
+#               mutate(age = difftime(date, dob, units = "days") %>% as.numeric(), 
+#                      delay = paste0("age_", delay)) %>% 
+#               select(-dob, -date) %>% 
+#               pivot_wider(names_from = delay, values_from = age), 
+#             by = "rfid") %>% # add date 
+#   select(-dob)
 
 
 

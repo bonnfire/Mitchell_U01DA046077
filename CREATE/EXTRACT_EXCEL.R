@@ -49,7 +49,26 @@ metadata <- metadata %>% rbindlist(idcol = "cohort")
 #   mutate_all(as.character) %>% 
 #   mutate_at(vars(-one_of("filename", "subject", "date", "time")), as.numeric) %>%
 #   mutate_at(vars(one_of("date")), lubridate::ymd)
-  
+
+# extract the delayed discounting traits for shipments 1-4
+
+mitchell_c01_04_dd_xl <- openxlsx::read.xlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Data-discounting/Combined Data_Shipments1-4/Fits_Shipment1-4_UCSD.xlsx") %>% 
+  clean_names
+mitchell_c01_04_dd_xl_df <- mitchell_c01_04_dd_xl %>% 
+  select(sex:s_or_ns, matches("hyperbolic_(k|ln_k|b)"), matches("auc"), matches("quasi_h_(k_beta|s_delta)")) %>% 
+  mutate_at(vars(matches("auc")), as.numeric) %>% 
+  select(-subject_number) %>% # since subset(subject_number != last_5) returns 0, remove one
+  select(-coat_color, -shipping_box, -housing_box, -order_in_box, -id_check) %>% 
+  rowwise() %>% 
+  mutate(rfid = paste0("9330003200", last_5),
+         cohort = paste0("C0", shipment),
+         box_color = toupper(box_color)) %>% 
+  ungroup() %>% 
+  select(cohort, rfid, sex, everything()) %>% 
+  select(-shipment, -last_5)
+
+
+
 
 
 
