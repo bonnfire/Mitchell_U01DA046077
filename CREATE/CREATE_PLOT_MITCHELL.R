@@ -7,16 +7,16 @@
 ## positive outliers here: avg_rxn_time_free, negative outliers here: avg_choice_rxn_time_free
 
 ## gget wfu sex and birthdate; join with metadata 
-
-discountingvalidtraits_graph <- discountingvalidtraits %>% 
-  mutate(subject = paste0("9330003200", subject)) %>% 
-  left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
-  left_join(metadata, by = c("cohort", "rfid")) %>% 
-  mutate(experimentage = round(as.numeric(date - lubridate::ymd(as.character(dob))), 0)) %>% 
-  mutate_at(vars(c("boxcolor", "computer", "assignedlever")), toupper) %>% 
-  select(cohort, rfid, everything()) %>% 
-  select(-c(filename, dob), filename)
-discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
+# 
+# discountingvalidtraits_graph <- discountingvalidtraits %>% 
+#   mutate(subject = paste0("9330003200", subject)) %>% 
+#   left_join(WFU_Mitchell_test_df[,c("cohort", "sex", "rfid", "dob")], ., by = c("rfid"= "subject")) %>% 
+#   left_join(metadata, by = c("cohort", "rfid")) %>% 
+#   mutate(experimentage = round(as.numeric(date - lubridate::ymd(as.character(dob))), 0)) %>% 
+#   mutate_at(vars(c("boxcolor", "computer", "assignedlever")), toupper) %>% 
+#   select(cohort, rfid, everything()) %>% 
+#   select(-c(filename, dob), filename)
+# discountingvalidtraits_graph$delay <- factor(discountingvalidtraits_graph$delay, levels = sort(discountingvalidtraits_graph$delay %>% unique))
 # WFU_Mitchell_test_df %>% 
 #   select(cohort, sex, rfid, dob) %>% 
 #   mutate(rfid = str_sub(rfid,-5,-1)) %>%
@@ -37,71 +37,85 @@ mitchell_spleenceca_toprocess %>% left_join(.,
   subset(is.na(assignedlever))
 
 
-discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T) %>% as.character(),
-                                    var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
-                                                  "number of forced trials", "number of free choice events before center nose poke", "number of forced delay events before center",
-                                                  "number of forced immediate events before center", "total events prior to center nose poke", "events prior to free choice", 
-                                                  "events prior to forced delay choice", "events prior to forced immediate choice", "total events prior to choice",
-                                                  "events during free choice timeout", "events during forced delay timeout", "events during forced immediate timeout", "total events during timeout",
-                                                  "average reaction time for free choice", "average choice reaction time for free choice", 
-                                                  "average timeout duration for free choice", "average collection time for free choice",
-                                                  "average number of events before immediate reward collection (free choice)", "average number of events before delayed reward collection (free choice)", 
-                                                  "total number of events before collection (free choice)", "percent rewards collected (free choice)")) %>% 
-                                                  # "average reaction times from start to center on the delayed side", "average reaction times from center to choice on the delayed side",
-                                                  # "average choice reaction times from start to center on the immediate side", "average choice reaction times from center to choice on the immediate side", 
-                                                  # "experiment age")) %>% 
-  mutate(var_abv = unlist(var_abv) %>% as.character,
-         var_graph = unlist(var_graph) %>% as.character)
+# discountingtraits_extract <- data.frame(var_abv = grep(pattern = "_", names(discountingvalidtraits_graph), perl = T, value = T) %>% as.character(),
+#                                     var_graph = c("total number of trials", "number of free choice trials", "number of forced delay trials", "number of forced immediate trials",
+#                                                   "number of forced trials", "number of free choice events before center nose poke", "number of forced delay events before center",
+#                                                   "number of forced immediate events before center", "total events prior to center nose poke", "events prior to free choice", 
+#                                                   "events prior to forced delay choice", "events prior to forced immediate choice", "total events prior to choice",
+#                                                   "events during free choice timeout", "events during forced delay timeout", "events during forced immediate timeout", "total events during timeout",
+#                                                   "average reaction time for free choice", "average choice reaction time for free choice", 
+#                                                   "average timeout duration for free choice", "average collection time for free choice",
+#                                                   "average number of events before immediate reward collection (free choice)", "average number of events before delayed reward collection (free choice)", 
+#                                                   "total number of events before collection (free choice)", "percent rewards collected (free choice)")) %>% 
+#                                                   # "average reaction times from start to center on the delayed side", "average reaction times from center to choice on the delayed side",
+#                                                   # "average choice reaction times from start to center on the immediate side", "average choice reaction times from center to choice on the immediate side", 
+#                                                   # "experiment age")) %>% 
+#   mutate(var_abv = unlist(var_abv) %>% as.character,
+#          var_graph = unlist(var_graph) %>% as.character)
+# 
+# setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
+# 
+# 
+# discountingvalidtraits_graph %>% split(.$cohort) %>% map(summary)
 
-setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC")
+s_or_ns|
 
+pdf("/home/bonnie/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC/mitchell_discounting_raw.pdf", onefile = T)
 
-discountingvalidtraits_graph %>% split(.$cohort) %>% map(summary)
+plotdata <- mitchell_c01_04_gwas_dd 
+gwas_vars <- plotdata %>% select(matches("hyperbolic|auc|quasi")) %>% names 
 
+boxplots_cohort = list()
+box_histplots_sex_cohort = list()
+densityplots = list()
+densityplots_sex_cohort = list()
 
+for (i in seq_along(gwas_vars)){
+  
+  # if(is.numeric(plotdata$gwas_vars[i])){
+    
+    densityplots[[i]] <- plotdata %>% 
+      ggplot() + 
+      geom_density(aes_string(gwas_vars[i])) +
+      theme(axis.text=element_text(size=12))
+    
+    boxplots_cohort[[i]] <- plotdata %>% 
+      ggplot(aes(x = cohort)) + 
+      geom_boxplot(aes_string(y = gwas_vars[i])) + 
+      theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+    
+    densityplots_sex_cohort[[i]] <- plotdata %>% 
+      ggplot(aes(color = sex)) + 
+      geom_density(aes_string(gwas_vars[i])) + 
+      facet_grid(rows = vars(cohort)) + 
+      theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+    
+    box_histplots_sex_cohort[[i]] <- plotdata %>%
+      ggplot(aes(x = cohort, fill = sex)) + 
+      geom_boxplot(aes_string(y = gwas_vars[i])) + 
+      theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+    
+    print(densityplots[[i]])
+    print(boxplots_cohort[[i]])
+    print(densityplots_sex_cohort[[i]])
+    print(box_histplots_sex_cohort[[i]])
+    
+  # }
+  
+  # else{
+  #   box_histplots_sex_cohort[[i]] <- plotdata %>%
+  #     ggplot(aes(fill = sex)) + 
+  #     geom_histogram(aes_string(x = gwas_vars[i]), stat = "count") + 
+  #     facet_grid(~cohort) + theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+  # }
+  
 
-pdf("mitchell_discounting_raw.pdf", onefile = T)
-for (i in seq_along(discountingtraits_extract$var_abv)){
-
+  
   # plot_by_cohort <- ggplot(discountingvalidtraits_graph, aes(x = cohort, group = cohort)) +
   #   geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
   #   geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
   #   labs(title = paste0(toupper(discountingtraits_extract$var_graph[i]), "_Discounting_U01_Mitchell", "\n"), x = "Cohort", fill = "Cohort") +  # scale_fill_discrete(name = "New Legend Title")
   #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  # 
-  # plot_by_computer <- ggplot(discountingvalidtraits_graph, aes(x = as.factor(computer), group = as.factor(computer))) +
-  #   geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
-  #   geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
-  #   labs(title = paste0(toupper(discountingtraits_extract$var_graph[i]), "_Discounting_U01_Mitchell", "\n"), x = "Box", fill = "Box") +  # scale_fill_discrete(name = "New Legend Title")
-  #   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-  plot_by_sex <- discountingvalidtraits_graph %>%
-    dplyr::filter(!is.na(delay)) %>% 
-    # ggplot(aes(x = as.factor(sex), group = as.factor(sex))) +
-    ggplot(aes(x = as.factor(delay), color = sex)) +
-    geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.75) +
-    # geom_jitter(aes_string(y = discountingtraits_extract$var_abv[i]), alpha = 0.3, position=position_jitter(0.2), size = 0.5) +
-    facet_grid(~ cohort) +
-    labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]),
-                                 "_Discounting_U01_Mitchell", "\n"), width = 60),
-         x = "Delay",
-         y = discountingtraits_extract$var_graph[i]) +  # scale_fill_discrete(name = "New Legend Title")
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  # plot_by_cohort_sex = discountingvalidtraits_graph %>% 
-  #   ggplot(aes(x = delay, color = cohort)) + ### XXX CHANGE THE FOR LOOP HERE ## NOTE THE OUTLIERS (POSITIVE)
-  #   geom_boxplot(aes_string(y = discountingtraits_extract$var_abv[i]), outlier.size = 0.5) + 
-  #   facet_grid( ~ sex) + 
-  #   labs(title = stringr::str_wrap(paste0(toupper(discountingtraits_extract$var_graph[i]), 
-  #                                         "_Discounting_U01_Mitchell", "\n"), width = 60),
-  #        y = discountingtraits_extract$var_graph[i])
-  
-  
-
-  # print(plot_by_cohort)
-  # print(plot_by_computer)
-  print(plot_by_sex)
-  # print(plot_by_cohort_sex)
   
 }
 dev.off()

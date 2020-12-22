@@ -90,6 +90,10 @@ locomotor_gwas_metadata_c01_05 <- locomotor_gwas %>%
 
 
 
+## GWAS DELAYED DISCOUNTING (after suzanne post nida meeting)
+mitchell_c01_04_gwas_dd <- mitchell_c01_04_dd_xl_df %>% 
+  left_join(dd_metadata_c01_04, by = "rfid")
+
 
 
 
