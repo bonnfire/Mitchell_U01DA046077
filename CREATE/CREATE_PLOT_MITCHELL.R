@@ -84,7 +84,7 @@ for (i in seq_along(gwas_vars)){
       geom_boxplot(aes_string(y = gwas_vars[i])) + 
       theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
     
-    densityplots_sex_cohort[[i]] <- plotdata %>% 
+    densityplots_sex_cohort[[i]] <- plotdata %>%  
       ggplot(aes(color = sex)) + 
       geom_density(aes_string(gwas_vars[i])) + 
       facet_grid(rows = vars(cohort)) + 
