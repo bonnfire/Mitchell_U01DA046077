@@ -94,7 +94,12 @@ locomotor_gwas_metadata_c01_05 <- locomotor_gwas %>%
 mitchell_c01_04_gwas_dd <- mitchell_c01_04_dd_xl_df %>% 
   left_join(dd_metadata_c01_04, by = "rfid")
 
-
+# after checking that operant_box == dd_operant_box and computer is proxy for box_color
+mitchell_c01_04_gwas_dd <- mitchell_c01_04_gwas_dd %>% 
+  rename("auc_trad" = "auc_traditional", 
+         "auc_norm0" = "auc_normal0s",
+         "hyperbolic_lnk" = "hyperbolic_ln_k") %>% 
+  select(cohort, rfid, sex, dd_squad_number, dd_computer, dd_operant_box, dd_assigned_lever, s_or_ns, hyperbolic_k, hyperbolic_lnk, hyperbolic_b, auc_trad, auc_norm0, quasi_h_k_beta, quasi_h_s_delta)
 
 
 

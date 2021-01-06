@@ -69,6 +69,7 @@ boxplots_cohort = list()
 box_histplots_sex_cohort = list()
 densityplots = list()
 densityplots_sex_cohort = list()
+## removed densityplots_operantbox_cohort
 
 for (i in seq_along(gwas_vars)){
   
@@ -99,7 +100,6 @@ for (i in seq_along(gwas_vars)){
     print(boxplots_cohort[[i]])
     print(densityplots_sex_cohort[[i]])
     print(box_histplots_sex_cohort[[i]])
-    
   # }
   
   # else{
