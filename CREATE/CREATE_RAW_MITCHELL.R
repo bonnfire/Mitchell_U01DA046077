@@ -34,7 +34,7 @@ setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA04
 
 
 setwd("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/Data-discounting") # use duplicate folder that contains the unzipped files
-discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T) # 10749 files 
+discounting_filenames <- list.files(path = ".", pattern = "*.txt", recursive = T, full.names = T) # 14232 files (now shipments 01-04 -- 01/11/2021) 
 # discounting_filenames %>% as.data.frame() %>% mutate(shipment = str_extract(`.`, "/Ship.*/")) %>% select(shipment) %>% table ## see which cohorts and how many each
 
 extract_delays<- function(x){
@@ -631,6 +631,21 @@ eventchoices_full <- eventchoices %>%
 #   
 # 
 # 
+  
+## extract age for delayed discounting
+discounting_c01_04_age <- discounting_filenames %>% 
+  as.data.frame() %>% 
+  mutate_all(as.character) %>% 
+  rename("filename" = ".") %>% 
+  mutate(rfid = paste0("9330003200", gsub(".*Subject (\\d+).txt", "\\1", filename)),
+         date = gsub(".*/(\\d{4}-\\d{2}-\\d{2}).*", "\\1", filename)) %>% 
+  mutate(date = as.Date(date)) %>% 
+  left_join(mitchell_wfu_metadata_c01_05[, c("rfid", "cohort", "dob")], by = "rfid") %>% 
+  mutate(age = round(as.numeric(date - as.Date(dob)))) %>% 
+  group_by(rfid) %>% 
+  summarize(experimentage = min(age, na.rm = T)) %>% 
+  ungroup() %>% 
+  left_join(mitchell_wfu_metadata_c01_05[, c("rfid", "cohort")], by = "rfid") 
   
   
   
