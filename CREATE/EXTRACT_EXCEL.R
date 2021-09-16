@@ -55,8 +55,8 @@ metadata <- metadata %>% rbindlist(idcol = "cohort")
 mitchell_c01_04_dd_xl <- openxlsx::read.xlsx("~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Data-discounting/Combined Data_Shipments1-4/Fits_Shipment1-4_UCSD.xlsx") %>% 
   clean_names
 mitchell_c01_04_dd_xl_df <- mitchell_c01_04_dd_xl %>% 
-  select(sex:s_or_ns, matches("hyperbolic_(k|ln_k|b)"), matches("auc"), matches("quasi_h_(k_beta|s_delta)")) %>% 
-  mutate_at(vars(matches("auc")), as.numeric) %>% 
+  select(sex:s_or_ns, matches("indiff"), matches("hyperbolic_(k|ln_k|b)"), matches("auc"), matches("quasi_h_(k_beta|s_delta)")) %>% 
+  mutate_at(vars(matches("auc|indiff")), as.numeric) %>% 
   select(-subject_number) %>% # since subset(subject_number != last_5) returns 0, remove one
   select(-coat_color, -shipping_box, -housing_box, -order_in_box, -id_check) %>% 
   rowwise() %>% 

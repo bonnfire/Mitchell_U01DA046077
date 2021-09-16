@@ -720,4 +720,48 @@ locomotor_avg <- locomotor_avg %>%
 ## how much raw data do we have for spleen/ceca data 
 mitchell_spleenceca_toprocess %>% left_join(., locomotor_avg, by = c("rfid" = "subject_id")) %>% subset(is.na(total_distance_cm.mean))
   
+
+
+
+
+#####
+## locomotor fecal boli
+#### 
+
+fecal_files <- list.files(path = "~/Dropbox (Palmer Lab)/Suzanne_Mitchell_U01/Data-locomotor", pattern = ".*Feca.*", full.names = T, recursive = T) %>% grep("Shipment[1-5]", ., value = T)
   
+fecal_function <- function(x){
+  x <- read_xlsx(x)
+  
+  x <- x %>% 
+    clean_names() %>% 
+    mutate_at(vars(matches("time")), ~ strftime(., format="%H:%M")) %>% 
+    mutate_at(vars(matches("date")), ~ strftime(., format="%Y-%m-%d")) %>% 
+    rename_at(vars(matches("^subj")), function(x) "rfid_abv") 
+  
+  names(x) <- gsub("_\\d+$", "", names(x)) %>% 
+    janitor::make_clean_names()
+  
+ return(x) 
+}
+
+locomotor_fecal_phenotypes <- lapply(fecal_files, fecal_function)
+names(locomotor_fecal_phenotypes) <- fecal_files
+locomotor_fecal_phenotypes_df <- locomotor_fecal_phenotypes %>% 
+  rbindlist(idcol = 'cohort', fill = T) %>% 
+  mutate(cohort = str_extract(cohort, "Shipment\\d+") %>% parse_number %>% str_pad(., 2, "left", "0") %>% paste0("C", .))
+
+## assign sex info and verify rfid's
+locomotor_fecal_phenotypes_df <- locomotor_fecal_phenotypes_df %>%
+  select(-sex) %>%
+  left_join(read.csv("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/U01/Suzanne_Mitchell_U01DA046077/Suzanne_Mitchell_U01/mitchell_wfu_master.csv", colClasses = "character") %>% 
+              select(cohort, rfid, sex) %>% 
+              mutate(rfid_abv = str_extract(rfid, "\\d{5}$")), 
+            by = c("cohort", "rfid_abv")) %>% 
+  select(-rfid_abv)
+
+
+
+
+
+

@@ -465,6 +465,56 @@ for (i in seq_along(gwas_vars)){
 dev.off()
 
 
+## locomotor for boli - excel qc 
+pdf("~/Dropbox (Palmer Lab)/Palmer Lab/Bonnie Lin/github/Mitchell_U01DA046077/QC/locomotor_boli_qc.pdf", onefile = T)
+
+
+plot_list_main = list()
+plot_list = list()
+plot_list2 = list()
+plot_list3 = list()
+plot_list4 = list()
+
+loco_boli_vars <- grep("cohort|rfid|box|date|time|sex", names(locomotor_fecal_phenotypes_df), value = T, invert = T)
+
+for (i in seq_along(loco_boli_vars)){
+  
+  plot_list_main[[i]] <- locomotor_fecal_phenotypes_df %>%
+    ggplot() +
+    geom_density(aes_string(loco_boli_vars[i])) +
+    theme(axis.text=element_text(size=12))
+  
+  plot_list[[i]] <- locomotor_fecal_phenotypes_df %>%
+    ggplot(aes(x = cohort)) +
+    geom_boxplot(aes_string(y = loco_boli_vars[i])) +
+    theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+  plot_list2[[i]] <- locomotor_fecal_phenotypes_df %>%
+    ggplot() +
+    geom_density(aes_string(loco_boli_vars[i])) +
+    facet_grid(rows = vars(cohort)) +
+    theme(axis.text=element_text(size=12), axis.text.x = element_text(angle = 45))
+  
+  plot_list3[[i]] <- locomotor_fecal_phenotypes_df %>%
+    ggplot(aes(x = box, fill = sex)) +
+    geom_boxplot(aes_string(y = loco_boli_vars[i])) +
+    theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+  # plot_list4[[i]] <- locomotor_fecal_phenotypes_df %>%
+  #   ggplot(aes(color = sex)) +
+  #   geom_density(aes_string(loco_boli_vars[i])) +
+  #   facet_grid(rows = vars(box)) +
+  #   theme(axis.text=element_text(size=9), axis.text.x = element_text(angle = 45))
+  
+  
+  print(plot_list_main[[i]])
+  print(plot_list[[i]])
+  print(plot_list2[[i]])
+  print(plot_list3[[i]])
+  # print(plot_list4[[i]])
+  
+}
+dev.off()
+
+
 
 
 ## old plot for locomotor graph  
@@ -555,3 +605,5 @@ locomotorvalidtraits_graph %>%
   facet_grid( ~ cohort) + 
   geom_point(data=seizure_rats_c04, aes(x = time, y = center_time_legacy_s.sum, color = sex), size = 2) +
   geom_text(data = seizure_rats_c04 %>% mutate(rfid = gsub("9330003200", "", rfid)), aes(x = time, y = center_time_legacy_s.sum, label = rfid), vjust=1)
+
+

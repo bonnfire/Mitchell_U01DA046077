@@ -99,8 +99,9 @@ mitchell_c01_04_gwas_dd <- mitchell_c01_04_dd_xl_df %>%
 mitchell_c01_04_gwas_dd <- mitchell_c01_04_gwas_dd %>% 
   rename("auc_trad" = "auc_traditional", 
          "auc_norm0" = "auc_normal0s",
-         "hyperbolic_lnk" = "hyperbolic_ln_k") %>% 
-  select(cohort, rfid, sex, dd_squad_number, dd_computer, dd_operant_box, dd_assigned_lever, s_or_ns, hyperbolic_k, hyperbolic_lnk, hyperbolic_b, auc_trad, auc_norm0, quasi_h_k_beta, quasi_h_s_delta, experimentage)
+         "hyperbolic_lnk" = "hyperbolic_ln_k",
+         "missing_indiff_point" = "missing_indifference_point") %>% 
+  select(cohort, rfid, sex, dd_squad_number, dd_computer, dd_operant_box, dd_assigned_lever, s_or_ns, matches("indiff"), hyperbolic_k, hyperbolic_lnk, hyperbolic_b, auc_trad, auc_norm0, quasi_h_k_beta, quasi_h_s_delta, experimentage)
 
 
 
